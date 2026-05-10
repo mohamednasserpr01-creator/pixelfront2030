@@ -1,0 +1,152 @@
+/* =========================================
+   1. شريط التصفح العلوي (Header & Nav)
+========================================= */
+header { 
+  position: fixed; top: 0; width: 100%; padding: 10px 3%; 
+  display: flex; justify-content: space-between; align-items: center; 
+  /* 💡 تم التعديل: تقوية الناف بار ليكون فوق كل شيء دائمًا */
+  z-index: 9999; backdrop-filter: blur(12px); border-bottom: 2px solid var(--p-purple);
+  background: var(--h-bg); box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+}
+
+.logo img { height: 40px; object-fit: contain; }
+
+nav { flex: 1; display: flex; justify-content: center; }
+nav ul { display: flex; list-style: none; gap: 5px; align-items: center; margin: 0; padding: 0; }
+nav ul li a { 
+  padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; 
+  display: flex; align-items: center; gap: 6px; transition: 0.3s; white-space: nowrap; 
+}
+nav ul li a:hover { background: var(--p-purple); color: white; }
+
+.toolbar { display: flex; gap: 10px; align-items: center; }
+
+/* 💡 السر هنا: إخفاء عناصر الموبايل في الكمبيوتر بقوة 💡 */
+.mobile-only, .mobile-toggle { display: none !important; }
+.hide-on-mobile { display: flex !important; }
+
+/* =========================================
+   2. الفوتر (Footer)
+========================================= */
+footer { 
+  background: var(--f-bg); color: white; padding: 50px 5% 20px;
+  border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; /* margin-top: auto مهمة عشان الفوتر ينزل لآخر الصفحة دايماً */
+  width: 100%; 
+}
+.footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
+.footer-col h3 { font-size: 1.2rem; margin-bottom: 15px; color: var(--txt); }
+.footer-col ul { list-style: none !important; padding: 0 !important; margin: 0 !important; }
+.footer-col ul li { margin-bottom: 10px; display: block; }
+.footer-col ul li a { font-size: 0.95rem; }
+
+.social-links { display: flex; gap: 15px; margin-top: 20px; }
+.social-links a { 
+  color: white; font-size: 1.2rem; background: rgba(255,255,255,0.1); 
+  width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; 
+  border-radius: 50%; transition: 0.3s;
+}
+.social-links a:hover { background: var(--p-purple); transform: translateY(-5px) scale(1.1); }
+
+/* =========================================
+   3. الكلاسات السحرية لضبط هيكل الصفحات (الحماية من التداخل)
+========================================= */
+.main-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 1400px; /* 💡 رجعنا التحديد عشان نلم الكروت في النص ومتبقاش سايحة */
+    margin: 0 auto;
+    padding: 100px 5% 60px; /* 💡 رجعنا 5% يمين وشمال، وظبطنا اللي تحت لـ 60px مسافة طبيعية جداً */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-x: hidden; 
+}
+
+/* =========================================
+   4. الهيكل في الموبايل (Responsive Layout)
+========================================= */
+@media (max-width: 992px) {
+    /* عكسنا اللي فوق: إخفاء عناصر الكمبيوتر، وإظهار الموبايل */
+    .hide-on-mobile { display: none !important; }
+    .mobile-only { display: flex !important; }
+    .mobile-toggle { display: block !important; }
+
+    .logo img { max-width: 140px !important; height: auto !important; }
+
+    /* القائمة الجانبية للموبايل */
+    header nav {
+        position: fixed !important; top: 60px; right: -100%; 
+        width: 280px; height: calc(100vh - 60px); background: var(--h-bg); 
+        backdrop-filter: blur(15px); border-left: 2px solid var(--p-purple); 
+        display: flex !important; flex-direction: column; padding: 20px; 
+        transition: right 0.4s ease-in-out; box-shadow: -10px 0 30px rgba(0,0,0,0.6); z-index: 9999;
+        overflow-y: auto;
+    }
+    html[dir="ltr"] header nav { right: auto; left: -100%; border-left: none; border-right: 2px solid var(--p-purple); }
+    header nav.active { right: 0 !important; }
+    html[dir="ltr"] header nav.active { left: 0 !important; right: auto !important; }
+
+    header nav ul { flex-direction: column; width: 100%; gap: 10px; align-items: flex-start; }
+    header nav ul li { width: 100%; }
+    header nav ul li a { 
+        width: 100%; padding: 15px; justify-content: flex-start; 
+        border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 1.1rem;
+    }
+    .light-mode header nav ul li a { border-bottom: 1px solid rgba(0,0,0,0.05); }
+
+    /* إصلاح الفوتر للموبايل (شبكة 2x2) */
+    footer { padding: 40px 15px 120px !important; text-align: right !important; }
+    html[dir="ltr"] footer { text-align: left !important; }
+    
+    .footer-grid {
+        display: grid !important; grid-template-columns: 1fr 1fr !important; 
+        gap: 25px 15px !important; align-items: start !important;
+    }
+    
+    .footer-col { display: flex !important; flex-direction: column !important; align-items: flex-start !important; text-align: right !important; }
+    html[dir="ltr"] .footer-col { align-items: flex-start !important; text-align: left !important; }
+
+    .footer-col h3 { font-size: 1.1rem !important; margin-bottom: 12px !important; }
+    .footer-col ul li { margin-bottom: 8px !important; display: block !important; }
+    .footer-col ul li a { font-size: 0.9rem !important; }
+    
+    /* اللوجو ووصف المنصة بياخدوا العرض كامل فوق */
+    .footer-col:first-child { grid-column: 1 / -1 !important; align-items: center !important; text-align: center !important; margin-bottom: 15px; }
+    
+    .auth-footer { grid-column: 1 / -1 !important; text-align: center !important; margin-top: 15px; width: 100%; }
+    .social-links { justify-content: center; width: 100%; }
+}
+
+/* =========================================
+   5. تخصيص الفوتر في الوضع الفاتح (Light Mode)
+========================================= */
+.light-mode footer {
+    background-color: var(--p-purple) !important;
+    color: #ffffff !important;
+    border-top: none !important;
+}
+
+/* ضمان أن كل النصوص والروابط داخل الفوتر تظل باللون الأبيض */
+.light-mode footer h3,
+.light-mode footer p,
+.light-mode footer li,
+.light-mode footer a {
+    color: #ffffff !important;
+}
+
+/* تظبيط أيقونات السوشيال ميديا في الفوتر لتناسب اللون البنفسجي */
+.light-mode footer .social-links a {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.light-mode footer .social-links a:hover {
+    background-color: #ffffff !important;
+    color: var(--p-purple) !important;
+}

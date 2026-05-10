@@ -1,0 +1,39 @@
+/* =========================================
+   🌞 Teacher LIGHT MODE (الوضع الفاتح للمدرس)
+========================================= */
+.teacher-container {
+  --p-purple: #6c5ce7; 
+  --bg: #f8fafc; 
+  --txt: #1e293b; 
+  --card: #ffffff; 
+  --f-bg: #4834d4; 
+  --h-bg: rgba(255, 255, 255, 0.95);
+  --mob-bg: #f0f0f0; 
+  --mob-btn: #ffffff;
+  --danger: #e74c3c;
+  --success: #2ecc71; 
+  --warning: #f1c40f; 
+  --gold: #ffd700; 
+  --txt-mut: rgba(30, 41, 59, 0.7);
+
+  /* إجبار قسم المدرس ياخد الألوان دي */
+  background-color: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* =========================================
+   🌙 Teacher DARK MODE (Premium Dark Purple)
+========================================= */
+.teacher-container.teacher-dark {
+  --p-purple: #8c7ae6; /* بنفسجي فاتح عشان ينور */
+  --bg: #130b21;       /* 🚀 بنفسجي غامق جداً جداً فخم */
+  --txt: #ffffff;
+  --card: rgba(255, 255, 255, 0.04);
+  --f-bg: #1a0f2e;     
+  --h-bg: rgba(19, 11, 33, 0.95); 
+  --mob-bg: #1e1133; 
+  --mob-btn: #2d1b4e;
+  --txt-mut: rgba(255, 255, 255, 0.6);
+}

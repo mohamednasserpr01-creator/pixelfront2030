@@ -1,0 +1,17 @@
+/* FILE: app/dashboard/Dashboard.module.css */
+.dashboardRoot { background: var(--bg); color: var(--txt); min-height: 100vh; display: flex; flex-direction: column; direction: rtl; width: 100%; max-width: 100%; overflow-x: hidden; }
+.dashContainer { display: flex; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; padding: 30px 20px; gap: 30px; min-width: 0; overflow-x: hidden; }
+.dashContent { flex: 1; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+
+/* Modal Avatars */
+.avatarGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 15px; margin-top: 20px; }
+.avatarOption { width: 100%; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
+.avatarOption.selected { border-color: var(--success); transform: scale(1.1); }
+
+/* Error Boundary Fallback */
+.errorState { background: rgba(231, 76, 60, 0.1); border: 1px dashed var(--danger); padding: 40px; border-radius: 15px; text-align: center; color: var(--txt); margin-top: 20px; }
+.errorState h3 { color: var(--danger); margin-bottom: 10px; }
+
+@media (max-width: 992px) {
+    .dashContainer { flex-direction: column; padding: 15px; margin: 0; }
+}

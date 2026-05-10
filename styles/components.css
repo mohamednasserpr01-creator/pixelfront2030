@@ -1,0 +1,67 @@
+/* =========================================
+   1. الأزرار (Buttons)
+========================================= */
+.btn-primary { background: var(--p-purple); color: white; padding: 8px 20px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; transition: 0.3s; display: inline-block;}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4); }
+
+.btn-outline { border: 2px solid var(--p-purple); color: var(--p-purple); padding: 6px 15px; border-radius: 8px; font-weight: bold; transition: 0.3s; display: inline-block;}
+.btn-outline:hover { background: var(--p-purple); color: white; }
+
+.icon-btn { color: var(--p-purple); font-size: 1.3rem; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+.icon-btn:hover { background: rgba(108, 92, 231, 0.1); transform: scale(1.1); }
+
+.btn-submit { background: var(--p-purple); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 1.2rem; font-weight: 900; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 15px;}
+.btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4); }
+.btn-submit:disabled { background: #ccc !important; color: #666 !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+.glow-btn { background: linear-gradient(45deg, var(--p-purple), #ff007f); color: white; padding: 15px 35px; border-radius: 50px; font-size: 1.2rem; font-weight: 900; display: inline-block; box-shadow: 0 0 20px rgba(108, 92, 231, 0.6); z-index: 5; position: relative; }
+.glow-btn:hover { box-shadow: 0 0 40px rgba(108, 92, 231, 1); transform: scale(1.05); }
+
+/* =========================================
+   2. الحقول والنماذج (Forms & Search)
+========================================= */
+.form-group { margin-bottom: 5px; position: relative; }
+.form-control { width: 100%; padding: 14px; border-radius: 12px; border: 2px solid rgba(108, 92, 231, 0.2); background: var(--bg); color: var(--txt); font-weight: bold; outline: none; transition: 0.3s; }
+.form-control:focus { border-color: var(--p-purple); background: rgba(108,92,231,0.05); }
+.form-control.invalid { border-color: var(--danger) !important; }
+
+.search-box { width: 100%; max-width: 500px; position: relative; }
+.search-box input { width: 100%; padding: 15px 45px 15px 20px; border-radius: 50px; border: 2px solid rgba(108,92,231,0.2); background: var(--card); color: var(--txt); font-size: 1rem; outline: none; transition: 0.3s; }
+.search-box input:focus { border-color: var(--p-purple); box-shadow: 0 0 15px rgba(108,92,231,0.2); }
+.search-box svg, .search-box i { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--p-purple); font-size: 1.2rem; }
+html[dir="ltr"] .search-box svg, html[dir="ltr"] .search-box i { right: auto; left: 20px; }
+html[dir="ltr"] .search-box input { padding: 15px 20px 15px 45px; }
+
+/* =========================================
+   3. النوافذ المنبثقة (Modals)
+========================================= */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; animation: fadeIn 0.3s ease; }
+.modal-box { background: var(--h-bg); border: 2px solid var(--p-purple); border-radius: 20px; padding: 30px; width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: right; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.close-modal { position: absolute; top: 15px; left: 15px; background: none; border: none; color: var(--danger); font-size: 1.5rem; cursor: pointer; transition: 0.3s; }
+html[dir="ltr"] .close-modal { left: auto; right: 15px; }
+.close-modal:hover { transform: scale(1.2); }
+
+/* =========================================
+   4. الكاروسيل (Carousel)
+========================================= */
+.carousel-wrapper { position: relative; display: flex; align-items: center; gap: 15px; width: 100%; }
+.carousel-track { display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; padding-bottom: 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; flex: 1; }
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-btn { width: 45px; height: 45px; background: var(--p-purple); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.3s; z-index: 10; cursor: pointer; }
+.carousel-btn:hover { background: #5a4bcf; transform: scale(1.1); }
+
+/* =========================================
+   5. عناصر مساعدة (Utilities & Toasts)
+========================================= */
+.img-wrapper { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: var(--card); }
+.img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.section-title { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 900; margin-bottom: 30px; border-right: 5px solid var(--p-purple); padding-right: 15px; }
+html[dir="ltr"] .section-title { border-right: none; border-left: 5px solid var(--p-purple); padding-right: 0; padding-left: 15px; }
+
+.spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.3); transform: translateY(100px); opacity: 0; transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 3000; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+html[dir="ltr"] .toast { right: auto; left: 30px; }
+.toast.show { transform: translateY(0); opacity: 1; }

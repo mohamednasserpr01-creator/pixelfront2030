@@ -1,0 +1,92 @@
+/* =========================================
+   1. القسم الرئيسي (Hero Section)
+========================================= */
+.hero { position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%); z-index: 2; }
+.hero .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out; }
+.hero .slide.active { opacity: 1; z-index: 1; }
+
+.hero-text { position: relative; z-index: 10; padding: 20px; max-width: 900px; width: 100%; margin: 0 auto; }
+.hero-text h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900; color: white; margin-bottom: 20px; letter-spacing: 2px; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+.hero-text p { font-size: clamp(1rem, 3vw, 1.8rem); color: #f8fafc; margin-bottom: 30px; font-weight: bold; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+
+/* =========================================
+   2. الكروت والكاروسيل (Courses & Offers)
+========================================= */
+.section-padding { padding: 80px 5%; }
+.card { background: var(--card); border: 1px solid rgba(108,92,231,0.2); border-radius: 20px; padding: 20px; text-align: right; min-width: 320px; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+html[dir="ltr"] .card { text-align: left; }
+.card:hover { transform: translateY(-10px); border-color: var(--p-purple); box-shadow: 0 15px 40px rgba(108,92,231,0.3); }
+.card-btn { background: var(--p-purple); color: white; padding: 12px 20px; border-radius: 12px; width: 100%; margin-top: 15px; font-weight: 900; font-size: 1.1rem; transition: 0.3s; display: block; text-align: center; }
+.card-btn:hover { background: #5a4bcf; transform: scale(1.02); }
+
+/* =========================================
+   3. الخدمات (Services Grid)
+========================================= */
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; text-align: center; margin-top: 40px; }
+.service-card { background: var(--bg); padding: 40px 20px; border-radius: 20px; border: 1px solid rgba(108,92,231,0.15); transition: 0.4s; }
+.service-card:hover { transform: translateY(-10px); border-color: var(--p-purple); background: rgba(108,92,231,0.05); }
+
+/* =========================================
+   4. مجتمع بيكسل (Forum Banner)
+========================================= */
+.forum-card { position: relative; background: linear-gradient(135deg, #1e1b4b, #0f172a); border-radius: 30px; padding: 60px 5%; text-align: center; overflow: hidden; border: 2px solid var(--p-purple); margin: 40px 0; color: #ffffff; }
+.forum-card h2, .forum-card p { color: #ffffff; transition: 0.3s; }
+.forum-glow-bg1 { position: absolute; top: -50%; left: -10%; width: 300px; height: 300px; background: var(--p-purple); filter: blur(100px); opacity: 0.4; border-radius: 50%; }
+.forum-glow-bg2 { position: absolute; bottom: -50%; right: -10%; width: 300px; height: 300px; background: #ff007f; filter: blur(100px); opacity: 0.3; border-radius: 50%; }
+
+.light-mode .forum-card { background: linear-gradient(135deg, #474f7a 0%, #b3c5e7 100%); border: none; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+.light-mode .forum-card h2 { color: #1e293b !important; text-shadow: none; }
+.light-mode .forum-card p { color: #334155 !important; font-weight: 900; }
+.light-mode .forum-glow-bg1, .light-mode .forum-glow-bg2 { opacity: 0; } 
+
+/* =========================================
+   5. أنيميشن الظهور (Reveal)
+========================================= */
+.reveal { opacity: 0; transform: translateY(40px); transition: 0.8s cubic-bezier(0.5, 0, 0, 1); }
+.reveal.active { opacity: 1; transform: translateY(0); }
+.delay-1 { transition-delay: 0.2s; }
+.delay-2 { transition-delay: 0.4s; }
+
+/* =========================================
+   📱 تظبيط الموبايل (Responsive Fixes)
+========================================= */
+@media (max-width: 768px) {
+    /* 💡 الأسهم طايفة فوق عشان متضغطش الكروت */
+    .carousel-wrapper { position: relative; width: 100%; display: block; }
+    
+    .carousel-btn { 
+        position: absolute; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        z-index: 20; 
+        width: 35px !important; 
+        height: 35px !important; 
+        font-size: 1rem; 
+        display: flex !important;
+    } 
+    /* الزرار اليمين */
+    .carousel-btn:first-of-type { right: -5px; }
+    /* الزرار الشمال */
+    .carousel-btn:last-of-type { left: -5px; }
+
+    .carousel-track { 
+        padding-bottom: 20px; 
+        scroll-snap-type: x mandatory; 
+        gap: 15px; 
+        display: flex;
+        overflow-x: auto;
+    }
+    .card { 
+        min-width: 85vw; 
+        scroll-snap-align: center; 
+    } 
+    
+    .hero-text { padding: 30px 15px; }
+    .section-padding { padding: 50px 5%; }
+
+    .services-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .service-card { padding: 25px 10px; }
+    .service-card h3 { font-size: 0.95rem; }
+    .service-card div { font-size: 2rem !important; margin-bottom: 10px !important; }
+}

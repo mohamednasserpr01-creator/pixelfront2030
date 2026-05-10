@@ -1,0 +1,173 @@
+/* ========================================= */
+/* 💡 Lecture Card & Item Styles */
+/* ========================================= */
+
+.cardWrapper {
+  background: var(--card);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardTitleSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.titleInput {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--p-purple);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  outline: none;
+  width: 60%;
+}
+
+.titleText {
+  margin: 0;
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.cardControls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.itemsCount {
+  font-size: 0.8rem;
+  color: var(--txt-mut);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.iconBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: var(--txt-mut);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.iconBtn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cardBody {
+  padding-right: 20px;
+  border-right: 2px solid rgba(255, 255, 255, 0.05);
+  margin-right: 10px;
+  margin-top: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.addContentBtn {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(155, 89, 182, 0.05);
+  border: 1px dashed rgba(155, 89, 182, 0.3);
+  color: var(--p-purple);
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: 0.2s;
+}
+
+.addContentBtn:hover {
+  background: rgba(155, 89, 182, 0.1);
+}
+
+/* ========================================= */
+/* 💡 Lecture Item Styles */
+/* ========================================= */
+
+.itemWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.dragHandle {
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  color: var(--txt-mut);
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.itemTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: white;
+}
+
+.badges {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+  padding-right: 25px;
+}
+
+.badge {
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.badgePdf { color: #e74c3c; }
+.badgeRef { color: #3498db; }
+
+/* ========================================= */
+/* 💡 Animations */
+/* ========================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

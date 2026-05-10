@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+/* =========================================
+   1. المتغيرات الأساسية (الألوان)
+========================================= */
+:root {
+  --p-purple: #6c5ce7; 
+  --bg: #0f172a; 
+  --txt: #ffffff;
+  --card: rgba(255, 255, 255, 0.05); 
+  --f-bg: #1e1b4b; 
+  --h-bg: rgba(15, 23, 42, 0.95);
+  --mob-bg: #2d1b63; 
+  --mob-btn: #412f80;
+  --danger: #e74c3c;
+  --success: #2ecc71; 
+  --warning: #f1c40f; 
+  --gold: #ffd700; 
+  --txt-mut: rgba(255, 255, 255, 0.6);
+}
+
+body.light-mode {
+  --bg: #f8fafc; 
+  --txt: #1e293b; 
+  --card: #ffffff; 
+  --f-bg: #4834d4; 
+  --h-bg: #ffffff;
+  --mob-bg: #f0f0f0; 
+  --mob-btn: #ffffff;
+  --txt-mut: rgba(30, 41, 59, 0.7);
+}
+
+/* =========================================
+   2. الريسيت الصارم (Reset & Typography)
+========================================= */
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box !important; 
+  font-family: 'Cairo', sans-serif; 
+}
+
+html, body { 
+  overflow-x: hidden !important; 
+  width: 100%; 
+  max-width: 100%; 
+  position: relative;
+}
+
+body { 
+  background: var(--bg); 
+  color: var(--txt); 
+  transition: background-color 0.3s, color 0.3s; 
+}
+
+a { 
+  text-decoration: none; 
+  color: inherit; 
+}
+
+button { 
+  cursor: pointer; 
+  border: none; 
+  outline: none; 
+  background: transparent; 
+  font-family: inherit; 
+}

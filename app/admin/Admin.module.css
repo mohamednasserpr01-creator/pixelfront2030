@@ -1,0 +1,178 @@
+/* FILE: app/admin/Admin.module.css */
+
+.adminWrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--bg);
+}
+
+/* ================================
+   السايد بار (Sidebar)
+================================ */
+.sidebar {
+    width: 280px;
+    min-width: 280px; /* لمنع الانكماش */
+    background-color: #151521;
+    border-left: 1px solid rgba(255, 255, 255, 0.05); /* خط فاصل خفيف من جهة المحتوى */
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    overflow: hidden; /* عشان نمنع أي سكرول بار يظهر بره الحاوية */
+}
+
+/* 💡 منطقة اللوجو */
+.logoArea {
+    height: 80px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0 20px;
+}
+
+.logoArea h1 {
+    font-weight: 900;
+    color: var(--p-purple);
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logoArea img {
+    max-height: 40px;
+    width: auto;
+}
+
+/* 💡 منطقة الروابط (تم ضبط العرض والسكرول) */
+.navLinks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px 15px; /* مسافة متساوية من كل الاتجاهات */
+    overflow-y: auto; /* السماح بالسكرول الداخلي فقط */
+    overflow-x: hidden;
+    height: calc(100vh - 80px);
+    /* 💡 Firefox & IE */
+    scrollbar-width: thin; 
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* 💡 ستايل السكرول بار (Webkit - Chrome/Edge/Safari) */
+.navLinks::-webkit-scrollbar {
+    width: 6px; /* سكرول رفيع وشيك */
+}
+.navLinks::-webkit-scrollbar-track {
+    background: transparent;
+}
+.navLinks::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.navLinks:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* تصميم الزرار العادي */
+.linkItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    color: var(--txt-mut);
+    text-decoration: none;
+    border-radius: 12px; /* حواف دائرية ناعمة داخلية */
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out;
+    margin: 0 5px; /* لمنع الالتصاق بالحواف الجانبية للسايد بار */
+}
+
+.linkItem span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+}
+
+.linkItem:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    transform: translateX(-4px); /* حركة خفيفة لليسار عند الـ Hover */
+}
+
+/* تصميم الزرار النشط (Active) */
+.linkItem.active {
+    background: linear-gradient(90deg, var(--p-purple), #ff007f);
+    color: white;
+    box-shadow: 0 5px 15px rgba(108, 92, 231, 0.25);
+    font-weight: 900;
+}
+
+/* ================================
+   منطقة المحتوى (Main Content)
+================================ */
+.mainContent {
+    flex: 1;
+    margin-right: 280px; /* مسافة مساوية لعرض السايد بار بالظبط */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: calc(100% - 280px); /* تأكيد العرض الصحيح */
+}
+
+.topbar {
+    height: 80px;
+    min-height: 80px;
+    background-color: rgba(21, 21, 33, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.pageContainer {
+    padding: 30px;
+    flex: 1;
+    overflow-x: hidden;
+}
+
+/* ================================
+   الموبايل والشاشات الصغيرة
+================================ */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(100%); /* إخفاء في اليمين */
+    }
+    
+    .sidebar.open {
+        transform: translateX(0); /* إظهار */
+        box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+    }
+    
+    .mainContent {
+        margin-right: 0; 
+        width: 100%;
+    }
+    
+    .topbar {
+        padding: 0 15px;
+    }
+    
+    .pageContainer {
+        padding: 15px;
+    }
+}

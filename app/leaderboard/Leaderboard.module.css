@@ -1,0 +1,91 @@
+/* FILE: app/leaderboard/Leaderboard.module.css */
+
+.pageWrapper { padding-top: 120px; padding-bottom: 120px; max-width: 1400px; margin: 0 auto; padding-inline: 5%; }
+
+/* 🚀 Typography & Headers */
+.fantasyHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px; }
+.fantasyTitle { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; color: var(--txt); display: flex; align-items: center; gap: 15px; margin: 0; }
+
+/* 🚀 Filters Bar */
+.plFiltersBar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 30px; align-items: center; }
+.plSelect { background: var(--card); border: 1px solid rgba(255,255,255,0.1); color: var(--txt); padding: 10px 20px; border-radius: 50px; font-weight: bold; font-size: 0.95rem; outline: none; cursor: pointer; transition: 0.2s; appearance: none; padding-inline-end: 35px; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c5ce7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 15px top 50%; background-size: 0.65rem auto; }
+html[dir="rtl"] .plSelect { background-position: left 15px top 50%; }
+.plSelect:hover { border-color: var(--p-purple); }
+
+.plSearch { position: relative; flex: 1; min-width: 250px; max-width: 400px; margin-inline-start: auto; }
+.plSearch input { width: 100%; background: var(--card); border: 1px solid rgba(255,255,255,0.1); color: var(--txt); padding: 10px 40px 10px 15px; border-radius: 50px; font-weight: bold; outline: none; transition: 0.2s; }
+html[dir="rtl"] .plSearch input { padding: 10px 15px 10px 40px; }
+.plSearch input:focus { border-color: var(--p-purple); }
+.plSearch svg { position: absolute; top: 50%; transform: translateY(-50%); right: 15px; color: var(--txt-mut); }
+html[dir="rtl"] .plSearch svg { right: auto; left: 15px; }
+
+/* 🚀 Podium (Top 3) */
+.podiumContainer { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin-bottom: 60px; height: 320px; padding: 0 20px; }
+.podiumCard { background: var(--card); border-radius: 20px 20px 0 0; text-align: center; position: relative; width: 200px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding-top: 20px; border: 1px solid rgba(255,255,255,0.05); border-bottom: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); transition: 0.3s; }
+.podiumCard:hover { transform: translateY(-10px); }
+
+.podiumRank1 { height: 280px; background: linear-gradient(180deg, rgba(241, 196, 15, 0.15) 0%, var(--bg) 100%); border-top: 4px solid #f1c40f; z-index: 3; }
+.podiumRank2 { height: 230px; background: linear-gradient(180deg, rgba(189, 195, 199, 0.15) 0%, var(--bg) 100%); border-top: 4px solid #bdc3c7; z-index: 2; }
+.podiumRank3 { height: 200px; background: linear-gradient(180deg, rgba(205, 127, 50, 0.15) 0%, var(--bg) 100%); border-top: 4px solid #cd7f32; z-index: 1; }
+
+.podiumAvatar { width: 90px; height: 90px; margin: -60px auto 15px; border-radius: 50%; border: 4px solid var(--bg); position: relative; background: var(--card); }
+.podiumRank1 .podiumAvatar { width: 110px; height: 110px; margin-top: -70px; border-color: #f1c40f; }
+.podiumRank2 .podiumAvatar { border-color: #bdc3c7; }
+.podiumRank3 .podiumAvatar { border-color: #cd7f32; }
+
+.medalIcon { position: absolute; bottom: -10px; right: -10px; font-size: 2rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+.podiumRank1 .medalIcon { font-size: 2.5rem; bottom: -15px; right: -15px; }
+
+.podiumName { font-weight: 900; color: white; font-size: 1.1rem; margin-bottom: 5px; padding: 0 10px; }
+.podiumRank1 .podiumName { font-size: 1.3rem; color: #f1c40f; }
+.podiumGov { color: var(--txt-mut); font-size: 0.85rem; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+.pointsBadge { background: rgba(0,0,0,0.3); color: white; padding: 8px 15px; border-radius: 50px; font-weight: 900; font-family: monospace; font-size: 1.2rem; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); display: inline-flex; align-items: center; gap: 5px; margin-top: auto; margin-bottom: 20px; }
+.pointsBadge:hover { background: var(--p-purple); border-color: var(--p-purple); transform: scale(1.05); }
+
+/* 🚀 Main Table */
+.lbTableContainer { background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 40px; }
+.lbTable { width: 100%; border-collapse: collapse; min-width: 900px; text-align: left; }
+html[dir="rtl"] .lbTable { text-align: right; }
+
+.lbTable th { padding: 18px 15px; color: var(--txt-mut); font-weight: bold; font-size: 0.9rem; border-bottom: 2px solid rgba(255,255,255,0.05); white-space: nowrap; }
+.lbTable td { padding: 15px; border-bottom: 1px dashed rgba(255,255,255,0.02); vertical-align: middle; transition: 0.2s; cursor: pointer; }
+.lbRow:hover td { background: rgba(255,255,255,0.02); }
+
+.colRank { width: 80px; font-weight: 900; font-size: 1.2rem; color: var(--txt); display: flex; align-items: center; gap: 10px; }
+.rankBorder { width: 4px; height: 35px; border-radius: 4px; }
+.trendIcon { font-size: 0.8rem; }
+.trendUp { color: #2ecc71; } .trendDown { color: #e74c3c; } .trendSame { color: var(--txt-mut); opacity: 0.5; }
+
+.colStudent { display: flex; align-items: center; gap: 15px; }
+.stuAvatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+.stuName { font-weight: 900; color: var(--txt); font-size: 1.05rem; margin-bottom: 3px; }
+.stuGov { color: var(--txt-mut); font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+
+.colStat { color: var(--txt-mut); font-weight: bold; font-family: monospace; font-size: 1.1rem; text-align: center; }
+.colTotal { font-weight: 900; color: var(--p-purple); font-size: 1.3rem; font-family: monospace; text-align: center; }
+
+.colForm { display: flex; gap: 4px; align-items: center; }
+.formCircle { width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.65rem; font-weight: 900; color: white; }
+.formW { background: #2ecc71; } .formL { background: #e74c3c; } .formD { background: #95a5a6; }
+
+.infoBtn { background: rgba(108,92,231,0.1); color: var(--p-purple); border: 1px solid var(--p-purple); padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+.infoBtn:hover { background: var(--p-purple); color: white; transform: scale(1.05); }
+
+/* 🚀 Personal Dashboard Bar (شريط الطالب السفلي) */
+.myRankBar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--p-purple); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); animation: slideUp 0.5s ease; }
+.myRankInfo { display: flex; align-items: center; gap: 15px; }
+.myRankPosition { font-size: 2rem; font-weight: 900; color: #f1c40f; font-family: monospace; }
+
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+@media (max-width: 768px) {
+    .podiumContainer { align-items: center; flex-direction: column; height: auto; gap: 30px; margin-top: 40px; margin-bottom: 40px; }
+    .podiumCard { width: 100%; border-radius: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); height: auto !important; padding-bottom: 20px; }
+    .podiumRank1 { order: 1; }
+    .podiumRank2 { order: 2; }
+    .podiumRank3 { order: 3; }
+    
+    .fantasyHeader { flex-direction: column; text-align: center; justify-content: center; }
+    .myRankBar { flex-direction: column; gap: 15px; text-align: center; }
+}
