@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx'; // 🚀 استدعاء مكتبة الإكسيل
+import * as XLSX from 'xlsx'; 
 import { 
     FaLayerGroup, FaPlus, FaEdit, FaTrash, 
     FaGraduationCap, FaTags, FaBookOpen, FaFileExcel 
@@ -10,34 +10,18 @@ import { Input } from '../../../components/ui/Input';
 import { Modal } from '../../../components/ui/Modal';
 import { useToast } from '../../../context/ToastContext';
 
-// 🚀 1. فصل الداتا: داتا الصفوف والشعب لوحدها
-const initialGrades = [
-    {
-        id: 'g1', name: 'الصف الأول الثانوي',
-        streams: [{ id: 's1', name: 'عام' }]
-    },
-    {
-        id: 'g2', name: 'الصف الثاني الثانوي',
-        streams: [{ id: 's2', name: 'علمي' }, { id: 's3', name: 'أدبي' }]
-    }
-];
-
-// 🚀 2. فصل الداتا: قاموس المواد لوحده خالص
-const initialSubjects = [
-    { id: 'sub1', name: 'الفيزياء' },
-    { id: 'sub2', name: 'الكيمياء' },
-    { id: 'sub3', name: 'اللغة العربية' },
-    { id: 'sub4', name: 'الرياضيات' },
-    { id: 'sub5', name: 'التاريخ' },
-];
+// 🚀 حط البورت الحقيقي بتاعك هنا لو اتغير في السيرفر
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export default function GradesManagement() {
     const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);
     
-    // States مفصولة
-    const [grades, setGrades] = useState(initialGrades);
-    const [subjects, setSubjects] = useState(initialSubjects);
+    const [grades, setGrades] = useState<any[]>([]);
+    const [subjects, setSubjects] = useState<any[]>([]);
+    const [isSaving, setIsSaving] = useState(false); 
+    const [isLoadingGrades, setIsLoadingGrades] = useState(true);
+    const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
 
     const [modalConfig, setModalConfig] = useState<{
         isOpen: boolean;
@@ -49,7 +33,45 @@ export default function GradesManagement() {
 
     const [inputValue, setInputValue] = useState('');
 
-    useEffect(() => setMounted(true), []);
+    const fetchGrades = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/educational-stages`);
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) setGrades(data);
+                else if (data && Array.isArray(data.data)) setGrades(data.data); 
+                else setGrades([]); 
+            } else setGrades([]);
+        } catch (error) {
+            console.error("Failed to fetch grades", error);
+            setGrades([]); // 🚀 حماية إضافية
+        } finally {
+            setIsLoadingGrades(false);
+        }
+    };
+
+    const fetchSubjects = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/subjects`);
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) setSubjects(data);
+                else if (data && Array.isArray(data.data)) setSubjects(data.data); 
+                else setSubjects([]); 
+            } else setSubjects([]);
+        } catch (error) {
+            console.error("Failed to fetch subjects", error);
+            setSubjects([]); // 🚀 حماية إضافية
+        } finally {
+            setIsLoadingSubjects(false);
+        }
+    };
+
+    useEffect(() => {
+        setMounted(true);
+        fetchGrades();
+        fetchSubjects();
+    }, []);
 
     const openModal = (mode: 'add' | 'edit', type: 'grade' | 'stream' | 'subject', parentId?: string, data?: any) => {
         setInputValue(data ? data.name : '');
@@ -61,65 +83,95 @@ export default function GradesManagement() {
         setInputValue('');
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!inputValue.trim()) {
             showToast('يرجى إدخال الاسم', 'error');
             return;
         }
 
-        const newId = Math.random().toString(36).substr(2, 9);
+        setIsSaving(true);
 
-        if (modalConfig.mode === 'add') {
-            if (modalConfig.type === 'grade') {
-                setGrades([...grades, { id: newId, name: inputValue, streams: [] }]);
+        try {
+            if (modalConfig.mode === 'add') {
+                if (modalConfig.type === 'grade') {
+                    const response = await fetch(`${API_BASE_URL}/educational-stages`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: inputValue })
+                    });
+                    if (response.ok) {
+                        fetchGrades(); showToast('تم حفظ الصف الدراسي!', 'success');
+                    } else showToast('حدث خطأ أثناء الحفظ', 'error');
+                } 
+                else if (modalConfig.type === 'stream') {
+                    const response = await fetch(`${API_BASE_URL}/educational-stages/${modalConfig.parentId}/streams`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: inputValue })
+                    });
+                    if (response.ok) {
+                        fetchGrades(); showToast('تمت إضافة الشعبة!', 'success');
+                    } else showToast('حدث خطأ أثناء حفظ الشعبة', 'error');
+                } 
+                else if (modalConfig.type === 'subject') {
+                    const response = await fetch(`${API_BASE_URL}/subjects`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: inputValue })
+                    });
+                    if (response.ok) {
+                        fetchSubjects(); showToast('تمت إضافة المادة للقاموس!', 'success');
+                    } else showToast('حدث خطأ أثناء الحفظ', 'error');
+                }
             } 
-            else if (modalConfig.type === 'stream') {
-                setGrades(grades.map(g => g.id === modalConfig.parentId ? { ...g, streams: [...g.streams, { id: newId, name: inputValue }] } : g));
-            } 
-            // 🚀 حفظ المادة في القاموس المنفصل
-            else if (modalConfig.type === 'subject') {
-                setSubjects([...subjects, { id: newId, name: inputValue }]);
+            else if (modalConfig.mode === 'edit') {
+                let url = '';
+                if (modalConfig.type === 'grade') url = `${API_BASE_URL}/educational-stages/${modalConfig.data.id}`;
+                else if (modalConfig.type === 'stream') url = `${API_BASE_URL}/educational-stages/streams/${modalConfig.data.id}`;
+                else if (modalConfig.type === 'subject') url = `${API_BASE_URL}/subjects/${modalConfig.data.id}`;
+
+                const response = await fetch(url, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: modalConfig.data.id, name: inputValue })
+                });
+
+                if (response.ok) {
+                    if (modalConfig.type === 'subject') fetchSubjects();
+                    else fetchGrades();
+                    showToast('تم التعديل بنجاح!', 'success');
+                } else showToast('حدث خطأ أثناء التعديل', 'error');
             }
-            showToast('تمت الإضافة بنجاح! ✅', 'success');
-        } 
-        else if (modalConfig.mode === 'edit') {
-            if (modalConfig.type === 'grade') {
-                setGrades(grades.map(g => g.id === modalConfig.data.id ? { ...g, name: inputValue } : g));
-            } 
-            else if (modalConfig.type === 'stream') {
-                setGrades(grades.map(g => g.id === modalConfig.parentId ? { ...g, streams: g.streams.map(s => s.id === modalConfig.data.id ? { ...s, name: inputValue } : s) } : g));
-            } 
-            // 🚀 تعديل المادة في القاموس المنفصل
-            else if (modalConfig.type === 'subject') {
-                setSubjects(subjects.map(sub => sub.id === modalConfig.data.id ? { ...sub, name: inputValue } : sub));
-            }
-            showToast('تم التعديل بنجاح! 💾', 'success');
+
+            closeModal();
+        } catch (error) {
+            console.error("API Error:", error);
+            showToast('حدث خطأ في الاتصال بالخادم', 'error');
+        } finally {
+            setIsSaving(false);
         }
-
-        closeModal();
     };
 
-    const handleDelete = (type: 'grade' | 'stream' | 'subject', id: string, name: string, parentId?: string) => {
+    const handleDelete = async (type: 'grade' | 'stream' | 'subject', id: string, name: string) => {
         if (confirm(`هل أنت متأكد من حذف (${name})؟`)) {
-            if (type === 'grade') {
-                setGrades(grades.filter(g => g.id !== id));
-            } else if (type === 'stream') {
-                setGrades(grades.map(g => g.id === parentId ? { ...g, streams: g.streams.filter(s => s.id !== id) } : g));
-            } else if (type === 'subject') {
-                setSubjects(subjects.filter(sub => sub.id !== id));
+            try {
+                let url = '';
+                if (type === 'grade') url = `${API_BASE_URL}/educational-stages/${id}`;
+                else if (type === 'stream') url = `${API_BASE_URL}/educational-stages/streams/${id}`;
+                else if (type === 'subject') url = `${API_BASE_URL}/subjects/${id}`;
+
+                const response = await fetch(url, { method: 'DELETE' });
+
+                if (response.ok) {
+                    if (type === 'subject') fetchSubjects();
+                    else fetchGrades();
+                    showToast(`تم حذف ${name} بنجاح! 🗑️`, 'success');
+                } else showToast('حدث خطأ أثناء الحذف', 'error');
+
+            } catch (error) {
+                console.error("Failed to delete", error);
+                showToast('حدث خطأ في الاتصال بالخادم', 'error');
             }
-            showToast(`تم حذف ${name} بنجاح! 🗑️`, 'success');
         }
     };
 
-    // 🚀 دالة استخراج ملف الإكسيل (للمرحلة أو الشعبة) ببيانات كاملة
     const exportStudentsToExcel = (targetName: string, type: 'grade' | 'stream') => {
         showToast(`جاري استخراج بيانات طلاب ${targetName}...`, 'info');
-        
         const EGYPT_GOVS = ['القاهرة', 'الإسكندرية', 'الجيزة', 'الشرقية', 'الدقهلية', 'البحيرة'];
         const SCHOOLS = ['مدرسة التوفيقية', 'مدرسة السعيدية', 'مدرسة النور', 'مدرسة الأبطال', 'مدرسة المستقبل'];
 
-        // توليد داتا وهمية شاملة لكل بيانات الطالب
         const mockStudents = Array.from({ length: Math.floor(Math.random() * 50) + 20 }).map((_, i) => {
             const gov = EGYPT_GOVS[i % EGYPT_GOVS.length];
             return {
@@ -141,9 +193,7 @@ export default function GradesManagement() {
 
         const ws = XLSX.utils.json_to_sheet(mockStudents);
         const wb = XLSX.utils.book_new();
-        ws['!views'] = [{ rightToLeft: true }]; // الإكسيل يفتح من اليمين لليسار
-        
-        // تظبيط عرض العواميد عشان الكلام يظهر مرتاح وميخشش في بعضه
+        ws['!views'] = [{ rightToLeft: true }]; 
         ws['!cols'] = [
             { wch: 5 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, 
             { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 40 }, { wch: 20 }, 
@@ -168,9 +218,6 @@ export default function GradesManagement() {
                 </div>
             </div>
 
-            {/* ========================================================= */}
-            {/* 🚀 القسم الأول: الصفوف والشعب (مع زراير الإكسيل) */}
-            {/* ========================================================= */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ color: 'var(--txt)', fontSize: '1.4rem' }}>الصفوف والشعب الدراسية</h2>
                 <Button variant="primary" icon={<FaPlus />} onClick={() => openModal('add', 'grade')}>
@@ -179,22 +226,20 @@ export default function GradesManagement() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '50px' }}>
-                {grades.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--txt-mut)', background: 'var(--card)', borderRadius: '15px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                        لا توجد صفوف دراسية مسجلة حالياً.
-                    </div>
+                {isLoadingGrades ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--p-purple)', fontWeight: 'bold' }}>جاري تحميل البيانات من الخادم... ⏳</div>
+                ) : (!grades || grades.length === 0) ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--txt-mut)', background: 'var(--card)', borderRadius: '15px', border: '1px dashed rgba(255,255,255,0.1)' }}>لا توجد صفوف دراسية مسجلة حالياً.</div>
                 ) : (
-                    grades.map(grade => (
-                        <div key={grade.id} style={{ background: 'var(--card)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                            
-                            {/* هيدر الصف الدراسي */}
+                    // 🚀 الحماية القصوى هنا (grades || [])
+                    (grades || []).map((grade: any, index: number) => (
+                        <div key={grade.id || `grade-${index}`} style={{ background: 'var(--card)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
                             <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '3px solid var(--p-purple)', flexWrap: 'wrap', gap: '15px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <div style={{ width: '45px', height: '45px', background: 'rgba(108,92,231,0.1)', color: 'var(--p-purple)', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem' }}>
                                         <FaGraduationCap />
                                     </div>
                                     <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--txt)', margin: 0 }}>{grade.name}</h2>
-                                    {/* 🚀 زرار إكسيل الصف بالكامل */}
                                     <button onClick={() => exportStudentsToExcel(grade.name, 'grade')} style={{ background: 'rgba(39, 174, 96, 0.1)', color: '#2ecc71', border: '1px solid rgba(39, 174, 96, 0.3)', padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem', fontWeight: 'bold' }} title={`تحميل جميع طلاب ${grade.name}`}>
                                         <FaFileExcel /> داتا الطلاب
                                     </button>
@@ -206,23 +251,22 @@ export default function GradesManagement() {
                                 </div>
                             </div>
 
-                            {/* الشعب بداخل الصف */}
                             <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
-                                {grade.streams.length === 0 ? (
+                                {!grade.streams || grade.streams.length === 0 ? (
                                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--txt-mut)', gridColumn: '1 / -1' }}>لا توجد شعب مسجلة في هذا الصف.</div>
                                 ) : (
-                                    grade.streams.map(stream => (
-                                        <div key={stream.id} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    (grade.streams || []).map((stream: any, sIndex: number) => (
+                                        <div key={stream.id || `stream-${sIndex}`} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.1)', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <FaTags style={{ color: 'var(--warning)' }} />
                                                 <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--txt)', margin: 0 }}>شعبة: <span style={{ color: 'var(--warning)' }}>{stream.name}</span></h3>
                                             </div>
                                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                                {/* 🚀 زرار إكسيل الشعبة */}
                                                 <button onClick={() => exportStudentsToExcel(`${grade.name} - ${stream.name}`, 'stream')} style={{ background: 'none', border: 'none', color: '#2ecc71', cursor: 'pointer', fontSize: '1.1rem' }} title={`تحميل طلاب شعبة ${stream.name}`}><FaFileExcel /></button>
                                                 <div style={{ width: '1px', height: '15px', background: 'rgba(255,255,255,0.1)' }}></div>
                                                 <button onClick={() => openModal('edit', 'stream', grade.id, stream)} style={{ background: 'none', border: 'none', color: 'var(--txt-mut)', cursor: 'pointer' }}><FaEdit /></button>
-                                                <button onClick={() => handleDelete('stream', stream.id, stream.name, grade.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.7 }}><FaTrash /></button>
+                                                {/* 🚀 الإيرور كان هنا وتم إصلاحه */}
+                                                <button onClick={() => handleDelete('stream', stream.id, stream.name)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.7 }}><FaTrash /></button>
                                             </div>
                                         </div>
                                     ))
@@ -233,9 +277,6 @@ export default function GradesManagement() {
                 )}
             </div>
 
-            {/* ========================================================= */}
-            {/* 🚀 القسم الثاني: القاموس العام للمواد الدراسية (مفصول تماماً) */}
-            {/* ========================================================= */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '40px' }}>
                 <div>
                     <h2 style={{ color: 'var(--txt)', fontSize: '1.4rem', margin: '0 0 5px 0' }}>القاموس العام للمواد الدراسية</h2>
@@ -247,12 +288,15 @@ export default function GradesManagement() {
             </div>
 
             <div style={{ background: 'var(--card)', padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                {subjects.length === 0 ? (
+                {isLoadingSubjects ? (
+                    <div style={{ textAlign: 'center', color: '#3498db', padding: '30px' }}>جاري تحميل قاموس المواد... ⏳</div>
+                ) : (!subjects || subjects.length === 0) ? (
                     <div style={{ textAlign: 'center', color: 'var(--txt-mut)', padding: '30px' }}>القاموس فارغ. يرجى إضافة مواد.</div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
-                        {subjects.map(sub => (
-                            <div key={sub.id} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(52, 152, 219, 0.2)', borderRadius: '10px', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: '0.2s' }} className="hover-card">
+                        {/* 🚀 الحماية القصوى هنا (subjects || []) */}
+                        {(subjects || []).map((sub: any, subIndex: number) => (
+                            <div key={sub.id || `sub-${subIndex}`} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(52, 152, 219, 0.2)', borderRadius: '10px', padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: '0.2s' }} className="hover-card">
                                 <div style={{ fontWeight: 'bold', color: 'var(--txt)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaBookOpen style={{ color: '#3498db' }}/> {sub.name}
                                 </div>
@@ -270,7 +314,6 @@ export default function GradesManagement() {
                 .hover-card:hover { border-color: #3498db !important; transform: translateY(-3px); background: rgba(52, 152, 219, 0.05) !important; }
             `}</style>
 
-            {/* Modal */}
             <Modal 
                 isOpen={modalConfig.isOpen} 
                 onClose={closeModal} 
@@ -286,8 +329,16 @@ export default function GradesManagement() {
                         onKeyDown={(e) => { if(e.key === 'Enter') handleSave() }}
                     />
                     <div style={{ display: 'flex', gap: '15px', marginTop: '25px' }}>
-                        <Button variant="primary" fullWidth onClick={handleSave} style={{ background: modalConfig.type === 'subject' ? '#3498db' : 'var(--p-purple)' }}>حفظ البيانات</Button>
-                        <Button variant="outline" fullWidth onClick={closeModal}>إلغاء</Button>
+                        <Button 
+                            variant="primary" 
+                            fullWidth 
+                            onClick={handleSave} 
+                            style={{ background: modalConfig.type === 'subject' ? '#3498db' : 'var(--p-purple)', opacity: isSaving ? 0.7 : 1 }}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'جاري الحفظ...' : 'حفظ البيانات'}
+                        </Button>
+                        <Button variant="outline" fullWidth onClick={closeModal} disabled={isSaving}>إلغاء</Button>
                     </div>
                 </div>
             </Modal>
