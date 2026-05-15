@@ -1,20 +1,17 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
     FaUsers, FaBookOpen, FaMoneyBillWave, FaChartLine, 
     FaPlayCircle, FaClipboardList, FaPlus, FaTasks, FaBullhorn, 
     FaArrowLeft, FaPenNib, FaUserGraduate, FaFileAlt
 } from 'react-icons/fa';
 
-// 🚀 استدعاء مودال إنشاء الكورس (عشان يسأل عن المرحلة والشعبة)
-import { CreateCourseModal } from '@/features/course-builder/components/CreateCourseModal';
-
 export default function TeacherDashboardPage() {
     const [mounted, setMounted] = useState(false);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const router = useRouter();
 
-    // 💡 إحصائيات للمدرس
     const stats = {
         totalStudents: 1450,
         activeCourses: 8,
@@ -22,7 +19,6 @@ export default function TeacherDashboardPage() {
         pendingGrading: 24
     };
 
-    // 🚀 مهام أكاديمية خاصة بالمدرس فقط (لا يوجد رسائل دعم هنا)
     const academicTasks = [
         { id: 1, title: 'تصحيح إجابات مقالية', desc: 'يوجد 24 إجابة مقالية بانتظار تقييمك في امتحان الباب الأول.', link: '/teacher/exams', color: '#e67e22', icon: <FaPenNib /> },
         { id: 2, title: 'كورسات قيد التجهيز (مسودة)', desc: 'لديك كورس "المراجعة النهائية" لم يتم نشره للطلاب حتى الآن.', link: '/teacher/courses', color: '#f1c40f', icon: <FaFileAlt /> },
@@ -38,7 +34,6 @@ export default function TeacherDashboardPage() {
     return (
         <div style={{ animation: 'fadeIn 0.5s ease', maxWidth: '1200px', margin: '0 auto', padding: '20px', paddingBottom: '50px' }}>
             
-            {/* 🚀 قسم الترحيب السريع */}
             <div style={{ background: 'linear-gradient(135deg, rgba(108,92,231,0.15), rgba(255,0,127,0.05))', border: '1px solid rgba(108,92,231,0.3)', borderRight: '5px solid var(--p-purple)', padding: '30px', borderRadius: '15px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
                 <div>
                     <h2 style={{ fontSize: '2rem', color: 'white', marginBottom: '8px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -48,13 +43,11 @@ export default function TeacherDashboardPage() {
                         هنا غرفة العمليات الخاصة بك.. راقب أداء المنصة، تفاعل طلابك، وإيراداتك في مكان واحد.
                     </p>
                 </div>
-                {/* 🚀 الزرار تم ربطه بـ Modal إنشاء الكورس بشكل سليم */}
-                <button onClick={() => setIsCreateModalOpen(true)} style={{ background: 'var(--p-purple)', color: 'white', border: 'none', padding: '15px 30px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', boxShadow: '0 5px 20px rgba(108,92,231,0.4)', transition: '0.3s' }} className="btn-hover">
-                    <FaPlus /> إنشاء كورس جديد
+                <button onClick={() => router.push('/teacher/courses')} style={{ background: 'var(--p-purple)', color: 'white', border: 'none', padding: '15px 30px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', boxShadow: '0 5px 20px rgba(108,92,231,0.4)', transition: '0.3s' }} className="btn-hover">
+                    <FaBookOpen /> الذهاب للكورسات
                 </button>
             </div>
 
-            {/* 🚀 كروت الإحصائيات (KPIs) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px', marginBottom: '40px' }}>
                 <div style={{ background: 'var(--card)', padding: '25px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
                     <div style={{ width: '65px', height: '65px', borderRadius: '15px', background: 'rgba(52, 152, 219, 0.1)', color: '#3498db', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '2rem' }}><FaUsers /></div>
@@ -78,14 +71,11 @@ export default function TeacherDashboardPage() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
-                
-                {/* 🚀 قسم الإجراءات السريعة */}
                 <div>
                     <h3 style={{ marginBottom: '20px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem' }}>
                         <FaChartLine color="var(--p-purple)" /> إدارة المحتوى السريعة
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        
                         <Link href="/teacher/courses" style={{ textDecoration: 'none' }}>
                             <div style={{ background: 'var(--card)', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', transition: '0.3s', cursor: 'pointer', height: '100%' }} className="hover-card">
                                 <FaBookOpen style={{ fontSize: '2.5rem', color: '#3498db', marginBottom: '10px' }} />
@@ -117,11 +107,9 @@ export default function TeacherDashboardPage() {
                                 <p style={{ color: 'var(--txt-mut)', fontSize: '0.85rem', margin: 0 }}>حملات وتنبيهات للطلاب</p>
                             </div>
                         </Link>
-
                     </div>
                 </div>
 
-                {/* 🚀 قسم المهام الأكاديمية العاجلة للمدرس */}
                 <div>
                     <h3 style={{ marginBottom: '20px', color: 'white', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.4rem' }}>
                         <FaTasks color="#2ecc71" /> مهام أكاديمية بانتظارك
@@ -147,16 +135,12 @@ export default function TeacherDashboardPage() {
                         ))}
                     </div>
                 </div>
-                
             </div>
 
             <style jsx>{`
                 .hover-card:hover { transform: translateY(-5px); border-color: var(--p-purple) !important; background: rgba(108,92,231,0.05) !important; }
                 .btn-hover:hover { transform: scale(1.02); background: rgba(255,255,255,0.1) !important; }
             `}</style>
-
-            {/* 🚀 إدراج المودال هنا */}
-            <CreateCourseModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
         </div>
     );
 }

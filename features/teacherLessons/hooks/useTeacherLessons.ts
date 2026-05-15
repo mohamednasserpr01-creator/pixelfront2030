@@ -4,8 +4,8 @@ import { lessonsService } from '../services/lessonsService';
 
 export const useTeacherLessons = (page: number, search: string, stage: string) => {
     return useQuery({
-        queryKey: ['teacherLessons', page, search, stage], // 💡 هيعمل Cache و Refetch أوتوماتيك لو أي حاجة من دول اتغيرت
+        queryKey: ['teacherLessons', page, search, stage], // 💡 هيعمل Cache و Refetch
         queryFn: () => lessonsService.getLessons(page, search, stage),
-        staleTime: 60000, // الداتا تفضل فريش لمدة دقيقة عشان نقلل الضغط على السيرفر
+        staleTime: 60000, 
     });
 };

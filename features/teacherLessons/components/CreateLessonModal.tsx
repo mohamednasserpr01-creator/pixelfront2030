@@ -1,5 +1,5 @@
-// FILE: features/teacherLessons/components/CreateLessonModal.tsx
-import React, { useState } from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '../../../components/ui/Modal';
 import { Input } from '../../../components/ui/Input';
@@ -12,12 +12,54 @@ interface Props {
     onClose: () => void;
 }
 
+interface Stage {
+    id: string | number;
+    name: string;
+}
+
+const API_BASE_URL = 'http://localhost:5000/api';
+
 export default function CreateLessonModal({ isOpen, onClose }: Props) {
     const router = useRouter();
     const { showToast } = useToast();
     const createLessonMutation = useCreateLesson();
 
-    const [newLessonData, setNewLessonData] = useState({ title: '', stage: 'sec3', unit: '' });
+    const [newLessonData, setNewLessonData] = useState({ title: '', stage: '', unit: '' });
+    
+    const [stages, setStages] = useState<Stage[]>([]);
+    const [isLoadingStages, setIsLoadingStages] = useState(true);
+
+    useEffect(() => {
+        const fetchStages = async () => {
+            if (!isOpen) return;
+            
+            setIsLoadingStages(true);
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch(`${API_BASE_URL}/educational-stages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const stagesArray = result.data || result; 
+                    const fetchedStages = Array.isArray(stagesArray) ? stagesArray : [];
+                    
+                    setStages(fetchedStages);
+                    
+                    if (fetchedStages.length > 0) {
+                        setNewLessonData(prev => ({ ...prev, stage: fetchedStages[0].id.toString() }));
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch educational stages", error);
+            } finally {
+                setIsLoadingStages(false);
+            }
+        };
+
+        fetchStages();
+    }, [isOpen]);
 
     const handleCreateLesson = () => {
         if (!newLessonData.title.trim() || !newLessonData.unit.trim()) {
@@ -29,8 +71,17 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
             onSuccess: (data) => {
                 showToast('تم الإنشاء! جاري تحويلك لإضافة المحتوى...', 'success');
                 onClose();
-                setNewLessonData({ title: '', stage: 'sec3', unit: '' });
-                setTimeout(() => router.push(`/teacher/lessons/${data.id}`), 1000);
+                setNewLessonData({ title: '', stage: stages.length > 0 ? stages[0].id.toString() : '', unit: '' });
+                
+                const createdId = data?.data?.id || data?.id; 
+                if (createdId) {
+                    setTimeout(() => router.push(`/teacher/lessons/${createdId}`), 1000);
+                }
+            },
+            // 🚀 التعديل هنا: صيد الخطأ وإظهاره للمدرس
+            onError: (error: any) => {
+                console.error("API Error:", error);
+                showToast(`عذراً، فشل الحفظ: ${error.message}`, 'error');
             }
         });
     };
@@ -51,11 +102,19 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
                         value={newLessonData.stage} 
                         onChange={e => setNewLessonData({...newLessonData, stage: e.target.value})} 
                         style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '10px', outline: 'none' }}
+                        disabled={isLoadingStages}
                     >
-                        <option value="prep3" style={{background: '#1e1e2d'}}>الصف الثالث الإعدادي</option>
-                        <option value="sec1" style={{background: '#1e1e2d'}}>الصف الأول الثانوي</option>
-                        <option value="sec2" style={{background: '#1e1e2d'}}>الصف الثاني الثانوي</option>
-                        <option value="sec3" style={{background: '#1e1e2d'}}>الصف الثالث الثانوي</option>
+                        {isLoadingStages ? (
+                            <option value="" style={{background: '#1e1e2d'}}>جاري تحميل المراحل...</option>
+                        ) : stages.length === 0 ? (
+                            <option value="" style={{background: '#1e1e2d'}}>لا توجد مراحل مسجلة في الإدارة</option>
+                        ) : (
+                            stages.map(stage => (
+                                <option key={stage.id} value={stage.id} style={{background: '#1e1e2d'}}>
+                                    {stage.name}
+                                </option>
+                            ))
+                        )}
                     </select>
                 </div>
 

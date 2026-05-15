@@ -52,11 +52,9 @@ export default function TeachersManagement() {
         }
     };
 
-    // 🚀 تم تصحيح الرابط هنا ليتطابق مع الـ Route في الباك إند
     const fetchStages = async () => {
         setIsStagesLoading(true);
         try {
-            // الرابط الصح بالشرطة (-)
             const response = await fetch(`${API_BASE_URL}/educational-stages`);
             if (response.ok) {
                 const data = await response.json();
@@ -129,6 +127,7 @@ export default function TeachersManagement() {
         }
     };
 
+    // 🚀 الدالة دي كانت موجودة بس النافذة بتاعتها مكانتش موجودة في الشاشة!
     const executeAction = async () => {
         if (!modalConfig.teacher) return;
 
@@ -257,7 +256,12 @@ export default function TeachersManagement() {
                                 ) : filteredTeachers.length > 0 ? filteredTeachers.map((teacher: any) => (
                                     <tr key={teacher.id} style={{ borderBottom: '1px dashed rgba(255,255,255,0.05)', transition: '0.3s' }}>
                                         <td style={{ padding: '20px' }}><div style={{ fontWeight: 'bold', color: 'var(--txt)' }}>{teacher.name}</div><div style={{ fontSize: '0.85rem', color: 'var(--txt-mut)' }}>{teacher.phone}</div></td>
-                                        <td style={{ padding: '20px', color: 'var(--warning)', fontWeight: 'bold', letterSpacing: '1px' }}>{teacher.password || teacher.passwordHash || 'مخفية من السيرفر'}</td>
+                                        
+                                        {/* 🚀 السر هنا: الباسورد العادي هيظهر بلون أحمر وواضح للأدمن */}
+                                        <td style={{ padding: '20px', color: '#ff4757', fontWeight: 'bold', letterSpacing: '2px', fontSize: '1.1rem' }}>
+                                            {teacher.plainPassword || 'غير متوفر'}
+                                        </td>
+                                        
                                         <td style={{ padding: '20px' }}>
                                             {teacher.subjects && teacher.subjects.length > 0 ? (
                                                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
@@ -269,7 +273,7 @@ export default function TeachersManagement() {
                                         <td style={{ padding: '20px' }}>
                                             <div style={{ display: 'flex', gap: '15px', color: 'var(--txt-mut)', fontSize: '0.9rem', alignItems: 'center' }}>
                                                 <span title="عدد الكورسات" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                    <FaBookOpen style={{ color: 'var(--warning)' }} /> {teacher.coursesCount}
+                                                    <FaBookOpen style={{ color: 'var(--warning)' }} /> {teacher.coursesCount || 0}
                                                 </span>
                                                 <button 
                                                     onClick={() => setExportConfig({ isOpen: true, teacherId: teacher.id, teacherName: teacher.name })} 
@@ -278,7 +282,7 @@ export default function TeachersManagement() {
                                                     onMouseEnter={(e) => e.currentTarget.style.color = 'var(--success)'}
                                                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--txt-mut)'}
                                                 >
-                                                    <FaFileExcel style={{ color: 'var(--success)' }} /> {teacher.studentsCount}
+                                                    <FaFileExcel style={{ color: 'var(--success)' }} /> {teacher.studentsCount || 0}
                                                 </button>
                                             </div>
                                         </td>
@@ -349,6 +353,28 @@ export default function TeachersManagement() {
                     </div>
                 </div>
             )}
+
+            {/* 🚀 ده المودال السري اللي كان ناقص عشان الحذف والحظر يشتغلوا */}
+            <Modal 
+                isOpen={modalConfig.isOpen} 
+                onClose={() => setModalConfig({ isOpen: false, type: 'ban', teacher: null })} 
+                title={modalConfig.type === 'delete' ? 'تأكيد الحذف' : modalConfig.type === 'ban' ? 'تأكيد الحظر' : 'فك الحظر'}
+            >
+                <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                    <FaExclamationTriangle style={{ fontSize: '3rem', color: 'var(--warning)', marginBottom: '15px' }} />
+                    <p style={{ fontSize: '1.1rem', color: 'var(--txt)', marginBottom: '25px', fontWeight: 'bold' }}>
+                        {modalConfig.type === 'delete' ? 'هل أنت متأكد من حذف هذا المدرس نهائياً؟ لا يمكن التراجع عن هذا الإجراء وتدمير بياناته.' :
+                         modalConfig.type === 'ban' ? 'هل أنت متأكد من حظر هذا المدرس؟ لن يتمكن من الدخول للمنصة مرة أخرى.' :
+                         'هل تريد فك الحظر عن هذا المدرس والسماح له بالدخول؟'}
+                    </p>
+                    <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                        <Button variant="outline" onClick={() => setModalConfig({ isOpen: false, type: 'ban', teacher: null })}>إلغاء</Button>
+                        <Button variant="primary" onClick={executeAction} style={{ background: modalConfig.type === 'delete' ? 'var(--danger)' : modalConfig.type === 'ban' ? 'var(--warning)' : 'var(--success)' }}>
+                            تأكيد الإجراء
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             <Modal 
                 isOpen={exportConfig.isOpen} 

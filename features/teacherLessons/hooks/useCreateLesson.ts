@@ -8,7 +8,7 @@ export const useCreateLesson = () => {
     return useMutation({
         mutationFn: lessonsService.createLesson,
         onSuccess: () => {
-            // 💡 أول ما الحصة تتكريت، بنعمل Invalidate عشان الجدول يعمل ريفريش لوحده!
+            // 💡 أول ما الحصة تترمي في الداتا بيز، بنعمل Invalidate عشان الجدول يسحب الجديد فوراً!
             queryClient.invalidateQueries({ queryKey: ['teacherLessons'] });
         }
     });

@@ -1,55 +1,101 @@
 // FILE: features/teacherLessons/services/lessonsService.ts
 
-// 💡 محاكاة لقاعدة البيانات (Database Mock)
-const MOCK_DB = Array.from({ length: 145 }, (_, i) => ({
-    id: i + 1,
-    title: `حصة رقم ${145 - i} - فيزياء متقدمة`,
-    stage: i % 2 === 0 ? 'sec3' : 'sec1',
-    unit: `الباب ${ (i % 4) + 1 }`,
-    videosCount: Math.floor(Math.random() * 3) + 1,
-    filesCount: Math.floor(Math.random() * 2),
-    date: `2026-04-${(i % 28 + 1).toString().padStart(2, '0')}`
-}));
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export const lessonsService = {
-    // 💡 محاكاة API جلب الحصص مع Server-side Pagination & Search
     getLessons: async (page: number, search: string, stage: string) => {
-        return new Promise<{ data: any[], totalPages: number, total: number }>((resolve) => {
-            setTimeout(() => { // محاكاة تأخير السيرفر
-                let filtered = [...MOCK_DB];
-
-                // 1. Server-side Search
-                if (search) {
-                    filtered = filtered.filter(lec => lec.title.includes(search) || lec.unit.includes(search));
-                }
-
-                // 2. Server-side Filter
-                if (stage && stage !== 'all') {
-                    filtered = filtered.filter(lec => lec.stage === stage);
-                }
-
-                // 3. Server-side Sort (الأحدث أولاً)
-                filtered.sort((a, b) => b.id - a.id);
-
-                // 4. Server-side Pagination
-                const limit = 10;
-                const total = filtered.length;
-                const totalPages = Math.ceil(total / limit);
-                const data = filtered.slice((page - 1) * limit, page * limit);
-
-                resolve({ data, totalPages, total });
-            }, 500); // 500ms delay
+        const token = localStorage.getItem('accessToken');
+        // 🚀 بيكلم api/lectures مباشرة
+        const response = await fetch(`${API_BASE_URL}/lectures`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        if (!response.ok) throw new Error('فشل في جلب الحصص من الخادم');
+        const rawData = await response.json(); 
+
+        let filtered = [...rawData];
+
+        if (search) {
+            filtered = filtered.filter((lec: any) => 
+                lec.title?.includes(search) || lec.description?.includes(search)
+            );
+        }
+
+        filtered.sort((a: any, b: any) => b.orderIndex - a.orderIndex);
+
+        const limit = 10;
+        const total = filtered.length;
+        const totalPages = Math.ceil(total / limit) || 1;
+        const data = filtered.slice((page - 1) * limit, page * limit);
+
+        return { data, totalPages, total };
     },
 
-    // 💡 محاكاة API إنشاء حصة
     createLesson: async (lessonData: { title: string, stage: string, unit: string }) => {
-        return new Promise<{ success: boolean, id: number }>((resolve) => {
-            setTimeout(() => {
-                const newId = Date.now();
-                // في الحقيقة هنا بنعمل POST Request
-                resolve({ success: true, id: newId });
-            }, 800);
+        const token = localStorage.getItem('accessToken');
+        const payload = {
+            title: lessonData.title,
+            description: lessonData.unit || "بدون وصف", 
+            orderIndex: 1, 
+            durationMinutes: 60,
+            isPreview: false,
+            videoUrl: ""
+        };
+
+        // 🚀 بيكلم api/lectures مباشرة من غير ID الكورس الوهمي
+        const response = await fetch(`${API_BASE_URL}/lectures`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+            let errorMsg = 'فشل في الحفظ.';
+            try {
+                const errData = await response.json();
+                console.error("Backend Error Data:", errData); 
+                
+                if (errData.errors) {
+                    const firstErrorKey = Object.keys(errData.errors)[0];
+                    errorMsg = errData.errors[firstErrorKey][0];
+                } else {
+                    errorMsg = errData.title || errData.message || errorMsg;
+                }
+            } catch(e) {}
+            throw new Error(errorMsg);
+        }
+        
+        return await response.json(); 
+    },
+
+    // 🚀 الدالة الجديدة اللي هتحفظ التعديلات والفيديوهات
+    updateLesson: async (id: string, lessonState: any) => {
+        const token = localStorage.getItem('accessToken');
+        const payload = {
+            title: lessonState.title,
+            description: lessonState.description || "بدون وصف",
+            orderIndex: 0,
+            durationMinutes: 30,
+            isPreview: false,
+            videoUrl: lessonState.videos?.length > 0 ? lessonState.videos[0].url : ""
+        };
+
+        const response = await fetch(`${API_BASE_URL}/lectures/${id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error('فشل في حفظ التعديلات في السيرفر');
+        }
+        
+        return await response.json(); 
     }
 };
