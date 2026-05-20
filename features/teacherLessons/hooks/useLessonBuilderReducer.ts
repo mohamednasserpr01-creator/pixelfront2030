@@ -3,8 +3,10 @@ import { LessonBuilderState, LessonVideo, LessonPDF, LessonReference } from '../
 
 const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
 
+// 🚀 ضفنا stage للأنواع (عشان التايب سكريبت ميزعلش)
 type Action = 
-    | { type: 'SET_INFO'; payload: { field: keyof LessonBuilderState; value: string } }
+    | { type: 'SET_INFO'; payload: { field: keyof LessonBuilderState | 'stage'; value: string } }
+    | { type: 'SET_INITIAL_DATA'; payload: Partial<LessonBuilderState & { stage: string }> } 
     // Videos
     | { type: 'ADD_VIDEO' }
     | { type: 'UPDATE_VIDEO'; payload: { id: string; field: keyof LessonVideo; value: any } }
@@ -19,17 +21,19 @@ type Action =
     | { type: 'UPDATE_REFERENCE'; payload: { id: string; field: keyof LessonReference; value: string } }
     | { type: 'DELETE_REFERENCE'; payload: string };
 
-const initialState: LessonBuilderState = {
+const initialState: LessonBuilderState & { stage: string } = {
     title: '',
     description: '',
+    stage: '', // 🚀 ضفنا المرحلة هنا
     videos: [],
     pdfs: [],
     references: []
 };
 
-function lessonBuilderReducer(state: LessonBuilderState, action: Action): LessonBuilderState {
+function lessonBuilderReducer(state: LessonBuilderState & { stage: string }, action: Action): LessonBuilderState & { stage: string } {
     switch (action.type) {
         case 'SET_INFO': return { ...state, [action.payload.field]: action.payload.value };
+        case 'SET_INITIAL_DATA': return { ...state, ...action.payload };
         
         // Videos
         case 'ADD_VIDEO': return { ...state, videos: [...state.videos, { id: generateId(), title: '', url: '', platform: 'bunny', showPreview: false }] };

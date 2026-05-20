@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 
 import { useDebounce } from '@/hooks/useDebounce';
 import { useTeacherLessons } from '@/features/teacherLessons/hooks/useTeacherLessons';
+import { useToast } from '@/context/ToastContext'; // 🚀 استيراد التوست للإشعارات
+import { lessonsService } from '@/features/teacherLessons/services/lessonsService'; // 🚀 استيراد السيرفيس للمسح
 
 import LessonsHeader from '@/features/teacherLessons/components/LessonsHeader';
 import LessonsFilters from '@/features/teacherLessons/components/LessonsFilters';
@@ -16,6 +18,7 @@ export default function TeacherLessonsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+    const { showToast } = useToast();
     const debouncedSearch = useDebounce(search, 500);
     const { data, isLoading, isError } = useTeacherLessons(currentPage, debouncedSearch, activeStage);
 
@@ -27,6 +30,21 @@ export default function TeacherLessonsPage() {
     const handleSearchChange = (val: string) => {
         setSearch(val);
         setCurrentPage(1); 
+    };
+
+    // 🚀 دالة المسح اللي هتبعت للجدول
+    const handleDeleteLesson = async (id: string) => {
+        if (!window.confirm('هل أنت متأكد من مسح هذه الحصة بشكل نهائي؟')) return;
+        
+        try {
+            await lessonsService.deleteLesson(id);
+            showToast('تم مسح الحصة بنجاح 🗑️', 'success');
+            // ريفريش بسيط عشان الحصة تختفي من الجدول فوراً
+            window.location.reload(); 
+        } catch (error: any) {
+            console.error("Delete Error:", error);
+            showToast(error.message || 'حدث خطأ أثناء المسح', 'error');
+        }
     };
 
     return (
@@ -41,9 +59,11 @@ export default function TeacherLessonsPage() {
                     onSearchChange={handleSearchChange} 
                 />
 
+                {/* 🚀 بعتنا دالة المسح كـ prop للجدول */}
                 <LessonsTable 
                     lessons={data?.data || []} 
                     isLoading={isLoading} 
+                    onDelete={handleDeleteLesson} 
                 />
 
                 {!isLoading && data?.totalPages && data.totalPages > 1 && (

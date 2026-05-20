@@ -24,6 +24,7 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
     const { showToast } = useToast();
     const createLessonMutation = useCreateLesson();
 
+    // 🚀 رجعناها Stage تاني
     const [newLessonData, setNewLessonData] = useState({ title: '', stage: '', unit: '' });
     
     const [stages, setStages] = useState<Stage[]>([]);
@@ -36,13 +37,14 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
             setIsLoadingStages(true);
             try {
                 const token = localStorage.getItem('accessToken');
+                // 🚀 بنكلم الـ API عشان نجيب المراحل الدراسية
                 const response = await fetch(`${API_BASE_URL}/educational-stages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    const stagesArray = result.data || result; 
+                    const stagesArray = result.data || result.items || result; 
                     const fetchedStages = Array.isArray(stagesArray) ? stagesArray : [];
                     
                     setStages(fetchedStages);
@@ -62,13 +64,13 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
     }, [isOpen]);
 
     const handleCreateLesson = () => {
-        if (!newLessonData.title.trim() || !newLessonData.unit.trim()) {
-            showToast('يرجى إدخال اسم الحصة والباب التابعة له', 'error');
+        if (!newLessonData.title.trim() || !newLessonData.stage) {
+            showToast('يرجى إدخال اسم الحصة واختيار المرحلة التابعة لها', 'error');
             return;
         }
 
         createLessonMutation.mutate(newLessonData, {
-            onSuccess: (data) => {
+            onSuccess: (data: any) => {
                 showToast('تم الإنشاء! جاري تحويلك لإضافة المحتوى...', 'success');
                 onClose();
                 setNewLessonData({ title: '', stage: stages.length > 0 ? stages[0].id.toString() : '', unit: '' });
@@ -78,7 +80,6 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
                     setTimeout(() => router.push(`/teacher/lessons/${createdId}`), 1000);
                 }
             },
-            // 🚀 التعديل هنا: صيد الخطأ وإظهاره للمدرس
             onError: (error: any) => {
                 console.error("API Error:", error);
                 showToast(`عذراً، فشل الحفظ: ${error.message}`, 'error');
@@ -107,7 +108,7 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
                         {isLoadingStages ? (
                             <option value="" style={{background: '#1e1e2d'}}>جاري تحميل المراحل...</option>
                         ) : stages.length === 0 ? (
-                            <option value="" style={{background: '#1e1e2d'}}>لا توجد مراحل مسجلة في الإدارة</option>
+                            <option value="" style={{background: '#1e1e2d'}}>لا توجد مراحل مسجلة في النظام</option>
                         ) : (
                             stages.map(stage => (
                                 <option key={stage.id} value={stage.id} style={{background: '#1e1e2d'}}>
@@ -131,7 +132,7 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
                     fullWidth 
                     onClick={handleCreateLesson} 
                     style={{ marginTop: '10px', padding: '15px' }}
-                    disabled={createLessonMutation.isPending}
+                    disabled={createLessonMutation.isPending || stages.length === 0}
                 >
                     {createLessonMutation.isPending ? 'جاري الإنشاء...' : 'حفظ ومتابعة لإضافة المحتوى'}
                 </Button>
