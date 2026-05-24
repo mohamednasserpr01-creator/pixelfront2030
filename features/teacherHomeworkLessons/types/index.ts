@@ -11,6 +11,7 @@ export interface HomeworkLessonVideo {
 export interface HomeworkLessonPDF {
     id: string;
     title: string;
+    url?: string; // 🚀 ده السطر اللي ضفناه عشان الإيرور بتاع رابط الملف يختفي
     file: File | null;
     previewUrl: string | null;
 }
@@ -24,6 +25,7 @@ export interface HomeworkLessonReference {
 export interface HomeworkLessonBuilderState {
     title: string;
     description: string;
+    stage?: string; // 🚀 ضفنا المرحلة هنا عشان تتحفظ بدون أي مشاكل
     videos: HomeworkLessonVideo[];
     pdfs: HomeworkLessonPDF[];
     references: HomeworkLessonReference[];

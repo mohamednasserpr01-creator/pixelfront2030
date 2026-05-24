@@ -9,8 +9,7 @@ import { Input } from '../../../components/ui/Input';
 import { Modal } from '../../../components/ui/Modal';
 import { useToast } from '../../../context/ToastContext';
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
+const API_BASE_URL = 'http://localhost:5290/api';
 export default function TeachersManagement() {
     const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);

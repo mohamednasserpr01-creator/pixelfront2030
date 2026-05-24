@@ -1,21 +1,19 @@
-// FILE: features/teacherLessons/services/lessonsService.ts
-
 const API_BASE_URL = 'http://localhost:5290/api';
 
-export const lessonsService = {
-    getLessons: async (page: number, search: string, stage: string) => {
+export const homeworkLessonsService = {
+    getHomeworks: async (page: number, search: string, stage: string) => {
         const token = localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE_URL}/lessons`, {
+        const response = await fetch(`${API_BASE_URL}/homework-lessons`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!response.ok) throw new Error('فشل في جلب الحصص من الخادم');
-        const rawResponse = await response.json(); 
+        if (!response.ok) throw new Error('فشل جلب حصص الواجب');
+        const result = await response.json(); 
 
         let rawData: any[] = [];
-        if (Array.isArray(rawResponse)) rawData = rawResponse;
-        else if (rawResponse?.data && Array.isArray(rawResponse.data)) rawData = rawResponse.data;
-        else if (rawResponse?.items && Array.isArray(rawResponse.items)) rawData = rawResponse.items;
+        if (Array.isArray(result)) rawData = result;
+        else if (result?.data && Array.isArray(result.data)) rawData = result.data;
+        else if (result?.items && Array.isArray(result.items)) rawData = result.items;
 
         let mappedData = rawData.map(lec => ({
             ...lec,
@@ -25,12 +23,10 @@ export const lessonsService = {
             referencesCount: lec.referencesCount || 0
         }));
 
-        // 1. 🚀 الفلترة حسب المرحلة (المشكلة اللي واجهتك)
         if (stage && stage !== 'all') {
             mappedData = mappedData.filter((lec: any) => lec.educationalStageId === stage);
         }
 
-        // 2. 🚀 البحث بالاسم أو الباب (شغال 100% ويدعم الحروف الكبيرة والصغيرة)
         if (search) {
             const lowerSearch = search.toLowerCase();
             mappedData = mappedData.filter((lec: any) => 
@@ -39,27 +35,23 @@ export const lessonsService = {
             );
         }
 
-        // ترتيب الحصص من الأحدث للأقدم
         mappedData.reverse(); 
 
-        // 3. 🚀 التقسيم لصفحات (Pagination) - كل 10 حصص في صفحة
         const limit = 10;
         const total = mappedData.length;
         const totalPages = Math.ceil(total / limit) || 1;
-        
-        // هنا بيقص الداتا بناءً على رقم الصفحة اللي إنت واقف عليها
         const data = mappedData.slice((page - 1) * limit, page * limit);
 
         return { data, totalPages, total };
     },
 
-    getLessonById: async (id: string) => {
+    getHomeworkById: async (id: string) => {
         const token = localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE_URL}/lessons/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/homework-lessons/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) throw new Error('فشل في جلب بيانات الحصة');
+        if (!response.ok) throw new Error('فشل جلب بيانات الحصة');
         const data = await response.json();
         
         return {
@@ -68,16 +60,15 @@ export const lessonsService = {
         };
     },
 
-    createLesson: async (lessonData: { title: string, stage: string, unit: string }) => {
+    createHomework: async (data: { title: string, stage: string, unit?: string }) => {
         const token = localStorage.getItem('accessToken');
-        
         const payload = {
-            title: lessonData.title,
-            description: lessonData.unit || "بدون وصف", 
-            stage: lessonData.stage && lessonData.stage !== "" ? lessonData.stage : null
+            title: data.title,
+            description: data.unit || "واجب", 
+            stage: data.stage && data.stage !== "" ? data.stage : null
         };
 
-        const response = await fetch(`${API_BASE_URL}/lessons`, {
+        const response = await fetch(`${API_BASE_URL}/homework-lessons`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -86,37 +77,35 @@ export const lessonsService = {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('فشل في الإنشاء');
+        if (!response.ok) throw new Error('فشل الإنشاء');
         return await response.json(); 
     },
 
-    updateLesson: async (id: string, lessonState: any) => {
+    updateHomework: async (id: string, lessonState: any) => {
         const token = localStorage.getItem('accessToken');
         
+        // 🚀 بننضف الداتا قبل ما تروح للباك إند
         const payload = {
             title: lessonState.title,
-            description: lessonState.description || "بدون وصف",
+            description: lessonState.description || "واجب",
             stage: lessonState.stage,
             videos: (lessonState.videos || []).map((v: any) => ({
-                id: v.id || Math.random().toString(), 
                 title: v.title || 'فيديو',
                 url: v.url || '',
                 platform: v.platform || 'bunny',
                 showPreview: !!v.showPreview
             })),
             pdfs: (lessonState.pdfs || []).map((p: any) => ({
-                id: p.id || Math.random().toString(),
                 title: p.title || 'ملف',
                 url: p.url || ''
             })),
             references: (lessonState.references || []).map((r: any) => ({
-                id: r.id || Math.random().toString(),
                 title: r.title || 'مرجع',
                 url: r.url || ''
             }))
         };
 
-        const response = await fetch(`${API_BASE_URL}/lessons/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/homework-lessons/${id}`, {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
@@ -125,21 +114,17 @@ export const lessonsService = {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            throw new Error('فشل في حفظ التعديلات في السيرفر');
-        }
-        
+        if (!response.ok) throw new Error('فشل في حفظ التعديلات');
         return true; 
     },
 
-    deleteLesson: async (id: string) => {
+    deleteHomework: async (id: string) => {
         const token = localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE_URL}/lessons/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/homework-lessons/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (!response.ok) throw new Error('فشل في مسح الحصة من السيرفر');
+        if (!response.ok) throw new Error('فشل المسح');
         return true; 
     }
 };

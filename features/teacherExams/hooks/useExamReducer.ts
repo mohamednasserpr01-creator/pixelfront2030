@@ -1,4 +1,3 @@
-// FILE: features/teacherExams/hooks/useExamReducer.ts
 import { useReducer } from 'react';
 import { ExamState, Question, QuestionType, ExamRandomSettings, ExamLanguage } from '../types';
 
@@ -9,6 +8,7 @@ const EN_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 type Action = 
     | { type: 'SET_TITLE'; payload: string }
+    | { type: 'SET_STAGE'; payload: string } // 🚀 ضفنا أكشن المرحلة هنا
     | { type: 'SET_DURATION'; payload: number }
     | { type: 'SET_LANGUAGE'; payload: ExamLanguage }
     | { type: 'UPDATE_RANDOM_SETTINGS'; payload: Partial<ExamRandomSettings> }
@@ -21,6 +21,7 @@ type Action =
 
 const initialState: ExamState = {
     title: 'امتحان الباب الأول',
+    stage: '', // 🚀 ضفنا القيمة الابتدائية للمرحلة هنا
     language: 'ar', 
     durationMinutes: 60,
     randomSettings: {
@@ -33,12 +34,12 @@ const initialState: ExamState = {
 function examReducer(state: ExamState, action: Action): ExamState {
     switch (action.type) {
         case 'SET_TITLE': return { ...state, title: action.payload };
+        case 'SET_STAGE': return { ...state, stage: action.payload }; // 🚀 ضفنا حالة تغيير المرحلة هنا
         case 'SET_DURATION': return { ...state, durationMinutes: action.payload };
         
         case 'SET_LANGUAGE': 
             const newLang = action.payload;
             const oldLang = state.language;
-            // 💡 السحر: تغيير الحروف أوتوماتيك لو المدرس غير اللغة
             const updatedQuestions = state.questions.map(q => {
                 if (q.type === 'mcq' && q.options) {
                     const newOptions = q.options.map((opt, idx) => {
@@ -57,7 +58,6 @@ function examReducer(state: ExamState, action: Action): ExamState {
         case 'ADD_QUESTION':
             const newQ: Question = { id: generateId(), type: action.payload, text: '', image: null, previewUrl: null, score: 1, difficulty: 'medium' };
             if (action.payload === 'mcq') {
-                // 💡 إضافة الحروف أوتوماتيك كنص للاختيار
                 const labels = state.language === 'en' ? EN_LABELS : AR_LABELS;
                 newQ.options = [0, 1, 2, 3].map((idx) => ({
                     id: generateId(),

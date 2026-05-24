@@ -8,6 +8,7 @@ const EN_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 type Action = 
     | { type: 'SET_TITLE'; payload: string }
+    | { type: 'SET_STAGE'; payload: string } // 🚀 ضفنا أكشن المرحلة
     | { type: 'SET_DUE_DATE'; payload: string }
     | { type: 'SET_ALLOW_LATE'; payload: boolean }
     | { type: 'SET_LANGUAGE'; payload: HomeworkLanguage }
@@ -16,20 +17,24 @@ type Action =
     | { type: 'UPDATE_QUESTION'; payload: { id: string; field: keyof Question; value: any } }
     | { type: 'ADD_OPTION'; payload: { questionId: string } }
     | { type: 'UPDATE_OPTION'; payload: { questionId: string; optionId: string; field: string; value: any } }
-    | { type: 'DELETE_OPTION'; payload: { questionId: string; optionId: string } };
+    | { type: 'DELETE_OPTION'; payload: { questionId: string; optionId: string } }
+    | { type: 'SET_FULL_STATE'; payload: any }; // 🚀 عشان نستقبل الداتا كاملة من الباك إند
 
 // الافتراضي للواجب
-const initialState: HomeworkState = {
+const initialState: HomeworkState & { stage?: string } = {
     title: 'واجب الدرس الأول',
+    stage: '', // 🚀 تهيئة المرحلة
     language: 'ar',
-    dueDate: '', // يترك فارغاً حتى يحدده المدرس
+    dueDate: '', 
     allowLateSubmission: false,
     questions: []
 };
 
-function homeworkReducer(state: HomeworkState, action: Action): HomeworkState {
+function homeworkReducer(state: HomeworkState & { stage?: string }, action: Action): HomeworkState & { stage?: string } {
     switch (action.type) {
         case 'SET_TITLE': return { ...state, title: action.payload };
+        case 'SET_STAGE': return { ...state, stage: action.payload }; // 🚀 تحديث المرحلة
+        case 'SET_FULL_STATE': return { ...state, ...action.payload }; // 🚀 دمج الداتا اللي راجعة من الداتا بيز
         case 'SET_DUE_DATE': return { ...state, dueDate: action.payload };
         case 'SET_ALLOW_LATE': return { ...state, allowLateSubmission: action.payload };
         

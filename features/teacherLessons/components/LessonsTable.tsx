@@ -1,10 +1,10 @@
-// FILE: features/teacherLessons/components/LessonsTable.tsx
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaFolderOpen, FaTrash } from 'react-icons/fa';
+import { FaFolderOpen, FaTrash, FaVideo, FaFilePdf, FaLink } from 'react-icons/fa';
 import { Button } from '../../../components/ui/Button';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // 🚀 ضفناه عشان نجيب المراحل
+// 🚀 تم تصحيح البورت ليتوافق مع السيرفر الجديد
+const API_BASE_URL = 'http://localhost:5290/api'; 
 
 interface Props {
     lessons: any[];
@@ -16,7 +16,6 @@ export default function LessonsTable({ lessons, isLoading, onDelete }: Props) {
     const router = useRouter();
     const [stagesMap, setStagesMap] = useState<Record<string, string>>({});
 
-    // 🚀 جلب قاموس المراحل عشان نترجم الـ ID لاسم المرحلة بالعربي
     useEffect(() => {
         const fetchStages = async () => {
             try {
@@ -28,7 +27,6 @@ export default function LessonsTable({ lessons, isLoading, onDelete }: Props) {
                     const data = await res.json();
                     const stagesArray = data.data || data.items || data || [];
                     
-                    // تحويل الداتا لقاموس (ID -> Name) لسهولة البحث
                     const map: Record<string, string> = {};
                     stagesArray.forEach((s: any) => {
                         map[s.id] = s.name;
@@ -59,8 +57,12 @@ export default function LessonsTable({ lessons, isLoading, onDelete }: Props) {
                 </thead>
                 <tbody>
                     {lessons.length > 0 ? lessons.map(lec => {
-                        // 🚀 السحر هنا: بنترجم الـ ID اللي جاي من الباك إند للاسم العربي من القاموس
                         const stageName = stagesMap[lec.educationalStageId] || stagesMap[lec.stage] || lec.educationalStage?.name || lec.stageName || 'مرحلة غير محددة';
+
+                        // 🚀 استخراج الأرقام من البيانات المترجمة من السيرفيس
+                        const vCount = lec.videosCount || 0;
+                        const pCount = lec.pdfsCount || 0;
+                        const rCount = lec.referencesCount || 0;
 
                         return (
                             <tr key={lec.id} style={{ borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
@@ -79,11 +81,17 @@ export default function LessonsTable({ lessons, isLoading, onDelete }: Props) {
                                     </div>
                                 </td>
                                 <td style={{ padding: '15px', color: 'var(--txt-mut)', fontSize: '0.95rem' }}>
-                                    <div style={{ display: 'flex', gap: '15px' }}>
-                                        <span style={{ color: (lec.videosCount || lec.videoUrl) ? '#3498db' : 'inherit' }}>
-                                            {lec.videosCount > 0 || lec.videoUrl ? 'يوجد فيديو' : '0 فيديو'}
+                                    {/* 🚀 السحر هنا: عرض تفصيلي لعدد كل نوع محتوى */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                        <span style={{ color: vCount > 0 ? '#3498db' : 'inherit', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <FaVideo /> {vCount} فيديو
                                         </span>
-                                        <span style={{ color: lec.filesCount > 0 ? '#e74c3c' : 'inherit' }}>{lec.filesCount || 0} ملف</span>
+                                        <span style={{ color: pCount > 0 ? '#e74c3c' : 'inherit', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <FaFilePdf /> {pCount} ملف
+                                        </span>
+                                        <span style={{ color: rCount > 0 ? '#2ecc71' : 'inherit', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <FaLink /> {rCount} مرجع
+                                        </span>
                                     </div>
                                 </td>
                                 <td style={{ padding: '15px', textAlign: 'center' }}>

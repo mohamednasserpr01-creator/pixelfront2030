@@ -34,7 +34,8 @@ export interface ExamRandomSettings {
 
 export interface ExamState {
     title: string;
-    language: ExamLanguage; // 💡 لغة الامتحان
+    stage: string; // 🚀 ضفنا المرحلة هنا
+    language: ExamLanguage; 
     durationMinutes: number;
     randomSettings: ExamRandomSettings;
     questions: Question[];

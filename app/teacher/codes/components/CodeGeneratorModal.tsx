@@ -1,24 +1,46 @@
 "use client";
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaQrcode, FaPalette, FaImage, FaTrash, FaPrint } from 'react-icons/fa';
+import { fetchAPI } from '../../../../lib/api/client';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onGenerate: (type: 'wallet' | 'course', value: string, count: number) => any[];
+    onGenerate: (type: 'wallet' | 'course', value: string, count: number) => Promise<any[]>;
 }
 
 export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerate }) => {
     const [type, setType] = useState<'wallet' | 'course'>('wallet');
     const [walletValue, setWalletValue] = useState('100');
-    const [courseId, setCourseId] = useState('كورس المراجعة النهائية');
-    const [count, setCount] = useState('54'); 
+    
+    // 🚀 تحديثات الكورسات الديناميكية
+    const [courses, setCourses] = useState<any[]>([]);
+    const [courseId, setCourseId] = useState('');
+    const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
+    const [count, setCount] = useState('54'); 
     const [codePriceLabel, setCodePriceLabel] = useState(100);
     const [codeTextColor, setCodeTextColor] = useState('#000000');
     const [bgImageBase64, setBgImageBase64] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 🚀 جلب الكورسات من الباك إند
+    useEffect(() => {
+        if (isOpen && type === 'course') {
+            setIsLoadingCourses(true);
+            // 💡 تم تغيير المسار إلى /Course ليتوافق مع الـ C# Controller
+            fetchAPI<any[]>('/Course') 
+                .then(data => {
+                    setCourses(data || []);
+                    if (data && data.length > 0) {
+                        setCourseId(data[0].id.toString()); 
+                    }
+                })
+                .catch(err => console.error("Error fetching courses:", err))
+                .finally(() => setIsLoadingCourses(false));
+        }
+    }, [isOpen, type]);
 
     if (!isOpen) return null;
 
@@ -34,33 +56,44 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
         e.target.value = '';
     };
 
-    const handleGenerateAndPrint = () => {
+    const handleGenerateAndPrint = async () => {
         const numCount = parseInt(count);
         if (isNaN(numCount) || numCount <= 0) return alert("❌ عدد الأكواد يجب أن يكون أكبر من صفر!");
         if (type === 'wallet' && (!walletValue || isNaN(parseInt(walletValue)))) return alert("❌ يرجى إدخال قيمة صحيحة للمحفظة!");
+        if (type === 'course' && !courseId) return alert("❌ يرجى اختيار كورس أولاً!");
         if (!bgImageBase64) return alert("⚠️ يرجى رفع صورة خلفية الكارت أولاً!");
 
         setIsGenerating(true);
 
-        setTimeout(() => {
+        try {
             const value = type === 'wallet' ? walletValue : courseId;
             
-            // 1. توليد الداتا من الجدول بتاعنا عشان تتسجل
-            const newCodes = onGenerate(type, value, numCount);
+            const newCodes = await onGenerate(type, value, numCount);
             
-            // 2. كود الـ HTML الداخلي بتاعك بالحرف (class="index")
+            const priceLen = codePriceLabel.toString().length;
+            let dynamicPriceSize = '11px';
+            if (priceLen === 4) dynamicPriceSize = '8px';
+            if (priceLen >= 5) dynamicPriceSize = '6px';
+            
             let cardsHtml = '';
-            newCodes.forEach(c => {
+            newCodes.forEach((c: any) => {
+                const formattedCode = c.code.match(/.{1,4}/g)?.join(' ') || c.code;
+
+                const serialLen = c.serial.toString().length;
+                let dynamicFontSize = '11px';
+                if (serialLen === 4) dynamicFontSize = '9px';
+                if (serialLen === 5) dynamicFontSize = '8px';
+                if (serialLen >= 6) dynamicFontSize = '7px';
+
                 cardsHtml += `
                     <div class="card">
-                        <p class="price">${codePriceLabel}</p>
-                        <p class="index">${c.serial}</p>
-                        <p class="code" style="color: ${codeTextColor}">${c.code}</p>
+                        <p class="price" style="font-size: ${dynamicPriceSize};">${codePriceLabel}</p>
+                        <p class="index" style="font-size: ${dynamicFontSize};">${c.serial}</p>
+                        <p class="code" style="color: ${codeTextColor}">${formattedCode}</p>
                     </div>
                 `;
             });
 
-            // 3. فتح نافذة الطباعة
             const printWindow = window.open('', '_blank');
             if (!printWindow) {
                 alert("يرجى السماح بالنوافذ المنبثقة (Pop-ups).");
@@ -68,7 +101,6 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                 return;
             }
 
-            // 4. كود التصميم بتاعك حرفياً بدون أي تعديل
             const htmlContent = `
             <!DOCTYPE html>
             <html dir="ltr">
@@ -82,9 +114,9 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                     @media print { div.card { page-break-inside: avoid; } ::-webkit-scrollbar { display: none; } }
                     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
                     .card { background-image: url('${bgImageBase64}'); background-position: center; background-repeat: no-repeat; background-size: cover; aspect-ratio: 21 / 10; position: relative; font-family: 'Russo One', sans-serif; }
-                    .price { position: absolute; top: 6%; left: 11%; font-size: 11px; font-weight: 900; color: black; }
-                    .index { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 900; color: black; letter-spacing: 1px; }
-                    .code { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+                    .price { position: absolute; top: 6%; left: 11%; font-weight: 900; color: black; }
+                    .index { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); font-weight: 900; color: black; letter-spacing: 1px; }
+                    .code { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 900; letter-spacing: 1px; width: 100%; text-align: center; }
                 </style>
             </head>
             <body>
@@ -98,10 +130,18 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
             printWindow.document.write(htmlContent);
             printWindow.document.close();
             
+        } catch (error) {
+            console.error("لم يتم الطباعة لوجود خطأ في السيرفر");
+        } finally {
             setIsGenerating(false);
             onClose();
-        }, 1000);
+        }
     };
+
+    const priceStrLen = codePriceLabel.toString().length;
+    let previewPriceSize = '11px';
+    if (priceStrLen === 4) previewPriceSize = '8px';
+    if (priceStrLen >= 5) previewPriceSize = '6px';
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
@@ -126,9 +166,18 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                     ) : (
                         <div>
                             <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '8px', fontSize: '0.9rem' }}>اختر الكورس المستهدف</label>
-                            <select value={courseId} onChange={e => setCourseId(e.target.value)} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px', outline: 'none' }}>
-                                <option value="كورس المراجعة النهائية" style={{ background: '#1e1e2d' }}>كورس المراجعة النهائية</option>
-                                <option value="كورس الباب الأول" style={{ background: '#1e1e2d' }}>كورس الباب الأول</option>
+                            <select value={courseId} onChange={e => setCourseId(e.target.value)} disabled={isLoadingCourses} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px', outline: 'none' }}>
+                                {isLoadingCourses ? (
+                                    <option value="" style={{ background: '#1e1e2d' }}>جاري تحميل الكورسات...</option>
+                                ) : courses.length > 0 ? (
+                                    courses.map(course => (
+                                        <option key={course.id} value={course.id} style={{ background: '#1e1e2d' }}>
+                                            {course.title || course.name}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="" style={{ background: '#1e1e2d' }}>لا توجد كورسات متاحة حالياً</option>
+                                )}
                             </select>
                         </div>
                     )}
@@ -166,6 +215,28 @@ export const CodeGeneratorModal: React.FC<Props> = ({ isOpen, onClose, onGenerat
                                 </>
                             )}
                         </div>
+
+                        <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '15px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.05)' }}>
+                            <h4 style={{ margin: '0 0 15px 0', color: 'var(--txt-mut)' }}>معاينة الطباعة</h4>
+                            <div style={{ width: '100%', aspectRatio: '21/10', background: bgImageBase64 ? `url(${bgImageBase64}) center/cover no-repeat` : '#1e1e2d', borderRadius: '10px', position: 'relative', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                                {!bgImageBase64 && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>ارفع التصميم للمعاينة هنا</div>}
+                                
+                                <div style={{ position: 'absolute', top: '6%', left: '11%', fontWeight: '900', color: '#000', fontSize: previewPriceSize }}>
+                                    {codePriceLabel}
+                                </div>
+                                
+                                <div style={{ position: 'absolute', bottom: '25%', left: '50%', transform: 'translateX(-50%)', color: '#000', fontWeight: '900', fontSize: '11px', letterSpacing: '1px' }}>
+                                    123
+                                </div>
+                                
+                                <div style={{ position: 'absolute', bottom: '5%', left: '50%', transform: 'translateX(-50%)', width: '100%', textAlign: 'center' }}>
+                                    <div style={{ color: codeTextColor, fontSize: '13px', fontWeight: 900, letterSpacing: '1px' }}>
+                                        1234 5678 9012 3456
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 

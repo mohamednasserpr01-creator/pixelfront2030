@@ -11,8 +11,7 @@ import { Modal } from '../../../components/ui/Modal';
 import { useToast } from '../../../context/ToastContext';
 
 // 🚀 حط البورت الحقيقي بتاعك هنا لو اتغير في السيرفر
-const API_BASE_URL = 'http://localhost:5000/api';
-
+const API_BASE_URL = 'http://localhost:5290/api';
 export default function GradesManagement() {
     const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);

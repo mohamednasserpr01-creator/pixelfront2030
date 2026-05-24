@@ -14,7 +14,8 @@ interface Props {
     onSearchChange: (val: string) => void;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// 🚀 تم تصحيح البورت ليتوافق مع السيرفر الجديد
+const API_BASE_URL = 'http://localhost:5290/api';
 
 export default function LessonsFilters({ activeStage, onStageChange, searchValue, onSearchChange }: Props) {
     const [stages, setStages] = useState<Stage[]>([]);
@@ -31,7 +32,7 @@ export default function LessonsFilters({ activeStage, onStageChange, searchValue
                 if (response.ok) {
                     const result = await response.json();
                     
-                    // 🚀 التعديل هنا: بنفتح الظرف بتاع الباك إند وناخد الـ Array اللي جوه data
+                    // 🚀 بنفتح الظرف بتاع الباك إند وناخد الـ Array اللي جوه data
                     const stagesArray = result.data || result; 
                     setStages(Array.isArray(stagesArray) ? stagesArray : []);
                 }

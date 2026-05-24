@@ -1,7 +1,7 @@
 // FILE: lib/api/client.ts
 // Global Fetch Client for API requests
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const BASE_URL = 'http://localhost:5290/api';
 
 interface FetchOptions extends RequestInit {
     params?: Record<string, string>;
@@ -33,6 +33,9 @@ export async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}):
     };
 
     try {
+        // 🚀 السطر ده هيفضح الرابط اللي الفرونت إند بيحاول يكلمه في الـ Console
+        console.log("🚀 FETCHING URL:", url); 
+        
         const response = await fetch(url, config);
         
         // Handle 204 No Content (e.g., Logout)

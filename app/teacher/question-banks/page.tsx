@@ -3,21 +3,66 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaDatabase, FaPlus, FaSearch, FaTrash, FaFolderOpen } from 'react-icons/fa';
 import { QuestionBankModal } from './components/QuestionBankModal';
+import { fetchAPI } from '@/lib/api/client';
+import { useToast } from '@/context/ToastContext';
 
 export default function QuestionBanksPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const { showToast } = useToast();
 
-    const [banks, setBanks] = useState([
-        { id: '1', title: 'بنك أسئلة الفيزياء الشامل', subject: 'فيزياء', stage: 'الصف الثالث الثانوي', questionsCount: 485, createdAt: '2023-09-01' },
-        { id: '2', title: 'تدريبات الباب الأول والثاني', subject: 'فيزياء', stage: 'الصف الثالث الثانوي', questionsCount: 120, createdAt: '2023-10-15' },
-    ]);
+    // 🚀 ربطنا القائمة بالداتا الحقيقية من الباك إند
+    const [banks, setBanks] = useState<any[]>([]);
 
-    useEffect(() => { setIsMounted(true); }, []);
+    const loadBanks = async () => {
+        try {
+            setIsLoading(true);
+            const data = await fetchAPI<any[]>('/QuestionBanks');
+            if (data) setBanks(Array.isArray(data) ? data : []);
+        } catch (error) {
+            showToast('خطأ في تحميل البنوك من الخادم', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => { 
+        setIsMounted(true); 
+        loadBanks();
+    }, []);
+
     if (!isMounted) return null;
 
-    const filteredBanks = banks.filter(b => b.title.includes(searchQuery) || b.subject.includes(searchQuery));
+    const filteredBanks = banks.filter(b => b.title?.includes(searchQuery) || b.subject?.includes(searchQuery));
+
+    // 🚀 الحفظ بيتبعت للباك إند بجد
+    const handleCreateBank = async (data: { title: string; subject: string; stage: string; image: string }) => {
+        try {
+            await fetchAPI('/QuestionBanks', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            showToast('تم إنشاء البنك بنجاح! 🎉', 'success');
+            setIsModalOpen(false);
+            loadBanks(); // ريفريش للقائمة
+        } catch (error) {
+            showToast('حدث خطأ أثناء إنشاء البنك', 'error');
+        }
+    };
+
+    const handleDeleteBank = async (id: string) => {
+        if (confirm('هل أنت متأكد من حذف هذا البنك نهائياً؟')) {
+            try {
+                await fetchAPI(`/QuestionBanks/${id}`, { method: 'DELETE' });
+                showToast('تم حذف البنك بنجاح 🗑️', 'success');
+                loadBanks();
+            } catch(error) {
+                showToast('خطأ أثناء الحذف', 'error');
+            }
+        }
+    };
 
     return (
         <div style={{ animation: 'fadeIn 0.4s ease', maxWidth: '1200px', margin: '0 auto', paddingBottom: '50px' }}>
@@ -41,7 +86,7 @@ export default function QuestionBanksPage() {
                 </div>
                 <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '1.5rem' }}><FaDatabase /></div>
-                    <div><div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem' }}>إجمالي الأسئلة</div><div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>{banks.reduce((acc, curr) => acc + curr.questionsCount, 0)}</div></div>
+                    <div><div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem' }}>إجمالي الأسئلة</div><div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>{banks.reduce((acc, curr) => acc + (curr.questionsCount || 0), 0)}</div></div>
                 </div>
             </div>
 
@@ -52,35 +97,36 @@ export default function QuestionBanksPage() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                {filteredBanks.map(bank => (
-                    <div key={bank.id} style={{ background: 'var(--card)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', transition: '0.3s' }} className="hover-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                            <h3 style={{ margin: 0, color: 'white', fontSize: '1.2rem', lineHeight: '1.4' }}>{bank.title}</h3>
-                            <span style={{ background: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{bank.subject}</span>
+            {isLoading ? (
+                <div style={{ textAlign: 'center', color: 'var(--txt-mut)', padding: '40px' }}>جاري تحميل البنوك... ⏳</div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                    {filteredBanks.map(bank => (
+                        <div key={bank.id} style={{ background: 'var(--card)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', padding: '20px', transition: '0.3s' }} className="hover-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                                <h3 style={{ margin: 0, color: 'white', fontSize: '1.2rem', lineHeight: '1.4' }}>{bank.title}</h3>
+                                <span style={{ background: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{bank.subject}</span>
+                            </div>
+                            <div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem', marginBottom: '8px' }}>المرحلة: <strong style={{ color: 'var(--txt)' }}>{bank.stage}</strong></div>
+                            <div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem', marginBottom: '20px' }}>عدد الأسئلة: <strong style={{ color: '#3498db' }}>{bank.questionsCount || 0} سؤال</strong></div>
+                            
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Link href={`/teacher/question-banks/${bank.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+                                    <button style={{ width: '100%', background: 'rgba(52, 152, 219, 0.1)', color: '#3498db', border: '1px solid #3498db', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>إدارة البنك وإضافة أسئلة</button>
+                                </Link>
+                                <button onClick={() => handleDeleteBank(bank.id)} style={{ background: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c', border: '1px solid transparent', width: '40px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: '0.2s' }} title="حذف البنك">
+                                    <FaTrash />
+                                </button>
+                            </div>
                         </div>
-                        <div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem', marginBottom: '8px' }}>المرحلة: <strong style={{ color: 'var(--txt)' }}>{bank.stage}</strong></div>
-                        <div style={{ color: 'var(--txt-mut)', fontSize: '0.9rem', marginBottom: '20px' }}>عدد الأسئلة: <strong style={{ color: '#3498db' }}>{bank.questionsCount} سؤال</strong></div>
-                        
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <Link href={`/teacher/question-banks/${bank.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-                                <button style={{ width: '100%', background: 'rgba(52, 152, 219, 0.1)', color: '#3498db', border: '1px solid #3498db', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>إدارة البنك وإضافة أسئلة</button>
-                            </Link>
-                            <button onClick={() => {
-                                if(confirm('هل أنت متأكد من حذف هذا البنك بالكامل؟')) setBanks(banks.filter(b => b.id !== bank.id));
-                            }} style={{ background: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c', border: '1px solid transparent', width: '40px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: '0.2s' }} title="حذف البنك">
-                                <FaTrash />
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                    {filteredBanks.length === 0 && (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--txt-mut)' }}>لا توجد بنوك مطابقة للبحث.</div>
+                    )}
+                </div>
+            )}
 
-            {/* 🚀 تصليح الـ Type الخاص بـ data */}
-            <QuestionBankModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={(data: { title: string; subject: string; stage: string }) => {
-                setBanks([{ id: Date.now().toString(), ...data, questionsCount: 0, createdAt: new Date().toISOString().split('T')[0] }, ...banks]);
-                setIsModalOpen(false);
-            }} />
+            <QuestionBankModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleCreateBank} />
         </div>
     );
 }

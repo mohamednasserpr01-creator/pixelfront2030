@@ -14,17 +14,18 @@ interface Props {
 
 interface Stage {
     id: string | number;
-    name: string;
+    name?: string;
+    title?: string;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// 🚀 التعديل الأهم: تغيير البورت لـ 5290 (بورت الباك إند الفعلي بتاعك)
+const API_BASE_URL = 'http://localhost:5290/api'; 
 
 export default function CreateLessonModal({ isOpen, onClose }: Props) {
     const router = useRouter();
     const { showToast } = useToast();
     const createLessonMutation = useCreateLesson();
 
-    // 🚀 رجعناها Stage تاني
     const [newLessonData, setNewLessonData] = useState({ title: '', stage: '', unit: '' });
     
     const [stages, setStages] = useState<Stage[]>([]);
@@ -37,7 +38,6 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
             setIsLoadingStages(true);
             try {
                 const token = localStorage.getItem('accessToken');
-                // 🚀 بنكلم الـ API عشان نجيب المراحل الدراسية
                 const response = await fetch(`${API_BASE_URL}/educational-stages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -112,7 +112,8 @@ export default function CreateLessonModal({ isOpen, onClose }: Props) {
                         ) : (
                             stages.map(stage => (
                                 <option key={stage.id} value={stage.id} style={{background: '#1e1e2d'}}>
-                                    {stage.name}
+                                    {/* 🚀 دعم لـ name أو title عشان نضمن إنها تقرأ في كل الحالات */}
+                                    {stage.name || stage.title}
                                 </option>
                             ))
                         )}

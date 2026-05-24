@@ -1,11 +1,13 @@
 "use client";
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { FaQrcode, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { CodesTable } from './components/CodesTable';
 import { CodeGeneratorModal } from './components/CodeGeneratorModal';
 import { BulkDeleteModal } from './components/BulkDeleteModal';
+import { codeService } from '../../../services/codeService';
+import { useToast } from '../../../context/ToastContext';
 
-// 🚀 التعديل الأهم: توليد 16 رقم فقط (بدون حروف أو شرط)
+// 🚀 توليد 16 رقم فقط (بدون حروف أو شرط)
 const generateRandomCode = () => {
     let code = '';
     for (let i = 0; i < 16; i++) {
@@ -15,6 +17,7 @@ const generateRandomCode = () => {
 };
 
 export default function CodesPage() {
+    const { showToast } = useToast();
     const [isMounted, setIsMounted] = useState(false);
     const [codes, setCodes] = useState<any[]>([]);
     
@@ -25,59 +28,86 @@ export default function CodesPage() {
     const [statusFilter, setStatusFilter] = useState('all'); 
     const [typeFilter, setTypeFilter] = useState('all'); 
 
+    // 💡 جلب الأكواد من السيرفر
+    const fetchCodes = useCallback(async () => {
+        try {
+            const data = await codeService.getAllCodes();
+            setCodes(data || []);
+        } catch (error) {
+            console.error("Failed to load codes:", error);
+            showToast('فشل في تحميل الأكواد', 'error');
+        }
+    }, [showToast]);
+
     useEffect(() => {
         setIsMounted(true);
-        setCodes([
-            { id: '1', serial: '84001', code: generateRandomCode(), type: 'wallet', value: '100', status: 'used', createdAt: '2023-10-25 10:00 AM', usedAt: '2023-10-26 12:30 PM', usedBy: 'أحمد محمود', teacherName: 'أ. محمد ناصر' },
-            { id: '2', serial: '84002', code: generateRandomCode(), type: 'course', value: 'كورس الباب الأول', status: 'unused', createdAt: '2023-10-25 10:00 AM', usedAt: null, usedBy: null, teacherName: 'أ. محمد ناصر' },
-        ]);
-    }, []);
+        fetchCodes();
+    }, [fetchCodes]);
 
-    const handleGenerateCodes = (type: 'wallet' | 'course', value: string, count: number) => {
+    // 💡 توليد وحفظ الأكواد في قاعدة البيانات
+    const handleGenerateCodes = async (type: 'wallet' | 'course', value: string, count: number) => {
         const timestamp = new Date().toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
         const newCodes = [];
         
-        // 🚀 السيريال أرقام فقط بيكمل على آخر كود (مثال يبدأ من 84000)
-        const baseSerial = 84000 + codes.length + 1;
+        // 🚀 التعديل هنا: السيريال بيبدأ من 1 ويزيد بالترتيب
+        const maxSerial = codes.length > 0 ? Math.max(...codes.map(c => parseInt(c.serial) || 0)) : 0;
+        const baseSerial = maxSerial + 1;
 
         for (let i = 0; i < count; i++) {
             newCodes.push({
-                id: Date.now().toString() + i,
-                serial: (baseSerial + i).toString(), // أرقام فقط
-                code: generateRandomCode(), // 16 رقم فقط
-                type,
-                value,
-                status: 'unused',
-                createdAt: timestamp,
-                usedAt: null,
-                usedBy: null,
-                teacherName: 'أ. محمد ناصر'
+                serial: (baseSerial + i).toString(),
+                code: generateRandomCode(),
+                type: type,
+                value: value.toString(),
+                batchId: timestamp
             });
         }
-        setCodes([...newCodes, ...codes]);
-        return newCodes; 
-    };
-
-    const handleDeleteSingle = (id: string) => {
-        if(confirm('هل أنت متأكد من مسح هذا الكود؟')) {
-            setCodes(codes.filter(c => c.id !== id));
+        
+        try {
+            // 🚀 الإجبار على انتظار الحفظ في السيرفر قبل استكمال الطباعة
+            await codeService.saveCodes(newCodes);
+            await fetchCodes(); 
+            return newCodes; 
+        } catch (err) {
+            showToast('حدث خطأ أثناء حفظ الأكواد في السيرفر', 'error');
+            console.error(err);
+            throw err; 
         }
     };
 
-    const handleBulkDelete = (timestamp: string) => {
-        setCodes(codes.filter(c => !(c.createdAt === timestamp && c.status === 'unused')));
-        alert('تم مسح الدفعة بنجاح!');
+    const handleDeleteSingle = async (id: string) => {
+        if(confirm('هل أنت متأكد من مسح هذا الكود نهائياً؟')) {
+            try {
+                await codeService.deleteCode(id);
+                setCodes(codes.filter(c => c.id !== id));
+                showToast('تم مسح الكود بنجاح', 'success');
+            } catch (error) {
+                showToast('فشل في مسح الكود', 'error');
+            }
+        }
+    };
+
+    const handleBulkDelete = async (batchId: string) => {
+        try {
+            await codeService.bulkDelete(batchId);
+            setCodes(codes.filter(c => !(c.batchId === batchId && !c.isUsed)));
+            showToast('تم مسح الدفعة بنجاح!', 'success');
+        } catch (error) {
+            showToast('فشل في مسح الدفعة، قد تكون مستخدمة بالكامل', 'error');
+        }
     };
 
     const availableTimestamps = useMemo(() => {
-        const stamps = new Set(codes.map(c => c.createdAt));
+        const stamps = new Set(codes.map(c => c.batchId || c.createdAt).filter(Boolean));
         return Array.from(stamps).sort().reverse();
     }, [codes]);
 
     const filteredCodes = useMemo(() => {
         return codes.filter(c => {
-            const matchSearch = c.serial.includes(searchQuery) || c.code.includes(searchQuery.toUpperCase()) || (c.usedBy && c.usedBy.includes(searchQuery));
-            const matchStatus = statusFilter === 'all' || c.status === statusFilter;
+            const matchSearch = (c.serial && c.serial.includes(searchQuery)) || 
+                                (c.code && c.code.includes(searchQuery.toUpperCase())) || 
+                                (c.usedBy && c.usedBy.includes(searchQuery));
+            const matchStatus = statusFilter === 'all' || (statusFilter === 'used' ? c.isUsed : !c.isUsed);
             const matchType = typeFilter === 'all' || c.type === typeFilter;
             return matchSearch && matchStatus && matchType;
         });

@@ -1,86 +1,113 @@
-"use client";
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaTimes, FaBook } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaTimes, FaSave } from 'react-icons/fa';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/context/ToastContext';
+import { courseService } from '@/features/teacherCourses/services/courseService';
 
-interface Props {
-    isOpen: boolean;
-    onClose: () => void;
-}
+const CORE_API_URL = 'http://localhost:5290/api';
 
-export const CreateCourseModal: React.FC<Props> = ({ isOpen, onClose }) => {
-    const router = useRouter();
+export const CreateCourseModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess: () => void }) => {
     const { showToast } = useToast();
+    const [title, setTitle] = useState('');
+    const [price, setPrice] = useState('');
+    const [stages, setStages] = useState<any[]>([]);
+    const [selectedStage, setSelectedStage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const [formData, setFormData] = useState({
-        title: '',
-        stage: 'sec3',
-        stream: 'all'
-    });
+    useEffect(() => {
+        if (isOpen) {
+            fetchStages();
+        }
+    }, [isOpen]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!formData.title.trim()) {
-            showToast('يرجى إدخال اسم الكورس', 'error');
+    const fetchStages = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`${CORE_API_URL}/educational-stages`, {
+                method: 'GET',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json' 
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const extracted = data.data || data.items || data || [];
+                setStages(extracted);
+                if (extracted.length > 0) setSelectedStage(extracted[0].name);
+            } else {
+                console.warn('Backend returned status:', response.status);
+            }
+        } catch (error) {
+            console.error("CORS or Network Error:", error);
+            // لن تضرب الشاشة الحمراء مجدداً، فقط سيتجاهل الخطأ
+        }
+    };
+
+    const handleCreate = async () => {
+        if (!title || !price || !selectedStage) {
+            showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
             return;
         }
 
-        // محاكاة إنشاء الكورس
-        const newId = Math.random().toString(36).substring(2, 9);
-        showToast('تم إنشاء الكورس مبدئياً، جاري تحويلك للبناء...', 'success');
-        onClose();
-        router.push(`/teacher/courses/${newId}`);
+        setIsLoading(true);
+        try {
+            await courseService.create({
+                title,
+                shortDescription: 'وصف قصير للكورس',
+                description: 'وصف كامل للكورس',
+                category: selectedStage,
+                price: parseFloat(price)
+            });
+            showToast('تم إنشاء الكورس بنجاح!', 'success');
+            onSuccess();
+            onClose();
+        } catch (error) {
+            showToast('حدث خطأ أثناء إنشاء الكورس', 'error');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, animation: 'fadeIn 0.2s ease' }}>
-            <div style={{ background: 'var(--card)', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '500px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                    <h2 style={{ margin: 0, color: 'var(--txt)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <FaBook style={{color: 'var(--p-purple)'}}/> بناء كورس جديد
-                    </h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--txt-mut)', cursor: 'pointer' }}><FaTimes size={20} /></button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box' }}>
+            <div style={{ background: 'var(--card)', width: '100%', maxWidth: '500px', borderRadius: '15px', padding: '20px', border: '1px solid rgba(255,255,255,0.1)', animation: 'slideDown 0.3s ease' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0, color: 'white', fontSize: '1.2rem' }}>إضافة كورس جديد</h2>
+                    <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--txt-mut)', cursor: 'pointer', fontSize: '1.2rem' }}><FaTimes /></button>
                 </div>
-                
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <Input 
-                        label="اسم الكورس" 
-                        placeholder="مثال: المراجعة النهائية (الفيزياء)" 
-                        value={formData.title} 
-                        onChange={e => setFormData({...formData, title: e.target.value})} 
-                        required 
-                    />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <Input label="اسم الكورس" placeholder="مثال: كورس الجيولوجيا الشامل" value={title} onChange={(e) => setTitle(e.target.value)} />
                     
                     <div>
-                        <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold' }}>المرحلة الدراسية</label>
-                        <select value={formData.stage} onChange={e => setFormData({...formData, stage: e.target.value})} style={{ width: '100%', padding: '12px 15px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: 'white', borderRadius: '8px', outline: 'none' }}>
-                            <option value="prep3" style={{ background: '#1e1e2d' }}>الصف الثالث الإعدادي</option>
-                            <option value="sec1" style={{ background: '#1e1e2d' }}>الصف الأول الثانوي</option>
-                            <option value="sec2" style={{ background: '#1e1e2d' }}>الصف الثاني الثانوي</option>
-                            <option value="sec3" style={{ background: '#1e1e2d' }}>الصف الثالث الثانوي</option>
+                        <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '5px', fontSize: '0.85rem', fontWeight: 'bold' }}>المرحلة الدراسية</label>
+                        <select value={selectedStage} onChange={(e) => setSelectedStage(e.target.value)} style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px', outline: 'none' }}>
+                            {stages.length === 0 ? (
+                                <option value="" disabled>جاري تحميل المراحل...</option>
+                            ) : (
+                                stages.map((s: any) => (
+                                    <option key={s.id} value={s.name} style={{ background: '#1e1e2d' }}>{s.name}</option>
+                                ))
+                            )}
                         </select>
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold' }}>الشعبة (إن وُجدت)</label>
-                        <select value={formData.stream} onChange={e => setFormData({...formData, stream: e.target.value})} style={{ width: '100%', padding: '12px 15px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: 'white', borderRadius: '8px', outline: 'none' }}>
-                            <option value="all" style={{ background: '#1e1e2d' }}>عام (الكل)</option>
-                            <option value="science" style={{ background: '#1e1e2d' }}>علمي علوم</option>
-                            <option value="math" style={{ background: '#1e1e2d' }}>علمي رياضة</option>
-                            <option value="literary" style={{ background: '#1e1e2d' }}>أدبي</option>
-                        </select>
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                        <Button type="button" variant="outline" onClick={onClose} style={{ flex: 1 }}>إلغاء</Button>
-                        <Button type="submit" variant="primary" style={{ flex: 2 }}>بدء تجهيز المحتوى</Button>
-                    </div>
-                </form>
+                    <Input label="سعر الكورس (ج.م)" type="number" placeholder="مثال: 250" value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+                    <Button variant="primary" onClick={handleCreate} disabled={isLoading} style={{ flex: 1, justifyContent: 'center' }} icon={<FaSave />}>
+                        {isLoading ? 'جاري الإنشاء...' : 'إنشاء الكورس'}
+                    </Button>
+                    <Button variant="danger" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>
+                        إلغاء
+                    </Button>
+                </div>
             </div>
         </div>
     );

@@ -4,8 +4,8 @@ import { HomeworkLessonBuilderState, HomeworkLessonVideo, HomeworkLessonPDF, Hom
 const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
 
 type Action = 
-    | { type: 'LOAD_LESSON'; payload: Partial<HomeworkLessonBuilderState> } 
-    | { type: 'SET_INFO'; payload: { field: keyof HomeworkLessonBuilderState; value: string } }
+    | { type: 'LOAD_LESSON'; payload: Partial<HomeworkLessonBuilderState> & { stage?: string } } 
+    | { type: 'SET_INFO'; payload: { field: keyof HomeworkLessonBuilderState | 'stage'; value: string } }
     // Videos
     | { type: 'ADD_VIDEO' }
     | { type: 'UPDATE_VIDEO'; payload: { id: string; field: keyof HomeworkLessonVideo; value: any } }
@@ -20,17 +20,19 @@ type Action =
     | { type: 'UPDATE_REFERENCE'; payload: { id: string; field: keyof HomeworkLessonReference; value: string } }
     | { type: 'DELETE_REFERENCE'; payload: string };
 
-const initialState: HomeworkLessonBuilderState = {
+// 🚀 تم إضافة stage هنا عشان نقدر نحفظ المرحلة بدون إيرور
+const initialState = {
     title: '',
     description: '',
+    stage: '', 
     videos: [],
     pdfs: [],
     references: []
-};
+} as unknown as HomeworkLessonBuilderState & { stage: string };
 
-function homeworkLessonBuilderReducer(state: HomeworkLessonBuilderState, action: Action): HomeworkLessonBuilderState {
+function homeworkLessonBuilderReducer(state: HomeworkLessonBuilderState & { stage: string }, action: Action): HomeworkLessonBuilderState & { stage: string } {
     switch (action.type) {
-        case 'LOAD_LESSON': return { ...state, ...action.payload };
+        case 'LOAD_LESSON': return { ...state, ...action.payload } as HomeworkLessonBuilderState & { stage: string };
         case 'SET_INFO': return { ...state, [action.payload.field]: action.payload.value };
         
         case 'ADD_VIDEO': return { ...state, videos: [...state.videos, { id: generateId(), title: '', url: '', platform: 'bunny', showPreview: false }] };

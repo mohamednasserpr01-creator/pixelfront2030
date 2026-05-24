@@ -1,4 +1,3 @@
-// FILE: app/teacher/lessons/[id]/page.tsx
 "use client";
 import React, { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,7 +9,8 @@ import { useLessonBuilder } from '@/features/teacherLessons/hooks/useLessonBuild
 import { VideoPlatform } from '@/features/teacherLessons/types';
 import { lessonsService } from '@/features/teacherLessons/services/lessonsService';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// 🚀 التعديل الأول: البورت اتظبط لـ 5290 عشان يقرأ المراحل صح
+const API_BASE_URL = 'http://localhost:5290/api';
 
 export default function LessonBuilderManager({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
@@ -30,26 +30,29 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                 const stagesRes = await fetch(`${API_BASE_URL}/educational-stages`, { headers: { 'Authorization': `Bearer ${token}` }});
                 if (stagesRes.ok) {
                     const stagesData = await stagesRes.json();
-                    setStages(stagesData.data || stagesData.items || stagesData || []);
+                    const stagesArray = stagesData.data || stagesData.items || stagesData;
+                    setStages(Array.isArray(stagesArray) ? stagesArray : []);
                 }
 
                 const rawResponse = await lessonsService.getLessonById(resolvedParams.id);
                 const lesson = rawResponse.data || rawResponse; 
                 
-                const loadedVideos = lesson.videoUrl ? [{
+                // 🚀 بنقرأ الفيديوهات من الموديل الجديد لو موجودة
+                const loadedVideos = lesson.videos?.length > 0 ? lesson.videos : (lesson.videoUrl ? [{
                     id: Math.random().toString(36).substring(2, 15),
                     title: 'فيديو الشرح الأساسي',
                     url: lesson.videoUrl,
                     platform: (lesson.videoUrl.includes('youtube') ? 'youtube' : (lesson.videoUrl.includes('vimeo') ? 'vimeo' : 'bunny')) as VideoPlatform,
                     showPreview: false
-                }] : [];
+                }] : []);
 
                 dispatch({ 
                     type: 'SET_INITIAL_DATA', 
                     payload: { 
                         title: lesson.title || '', 
                         description: lesson.description && lesson.description !== "بدون وصف" ? lesson.description : '',
-                        stage: lesson.educationalStageId || '', 
+                        // 🚀 التعديل التاني: بنقرأ stage بشكل صحيح من الباك إند الجديد
+                        stage: lesson.stage || lesson.educationalStageId || '', 
                         videos: loadedVideos,
                         pdfs: lesson.pdfs || [], 
                         references: lesson.references || []
@@ -68,8 +71,9 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
     }, [resolvedParams.id, dispatch, showToast]);
 
     const handleSaveLesson = async () => {
-        if (!state.title) {
-            showToast('يجب إدخال اسم الحصة أولاً', 'error');
+        // 🚀 أضفنا تحقق من المرحلة قبل الحفظ عشان نمنع الإيرور
+        if (!state.title || !state.stage) {
+            showToast('يجب إدخال اسم الحصة واختيار المرحلة', 'error');
             return;
         }
         
@@ -154,7 +158,8 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                                     >
                                         <option value="" style={{background: '#1e1e2d'}}>-- اختر المرحلة الدراسية --</option>
                                         {stages.map(s => (
-                                            <option key={s.id} value={s.id} style={{background: '#1e1e2d'}}>{s.name}</option>
+                                            // 🚀 التعديل التالت: عشان نعرض الاسم صح
+                                            <option key={s.id} value={s.id} style={{background: '#1e1e2d'}}>{s.name || s.title}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -196,7 +201,6 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                         </div>
                     )}
 
-                    {/* 🚀 قسم ملفات PDF المتعدل */}
                     {activeTab === 'pdfs' && (
                         <div style={{ animation: 'fadeIn 0.3s ease' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -205,11 +209,9 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                             </div>
                             {state.pdfs?.map((p: any) => (
                                 <div key={p.id} style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: '1px dashed rgba(52, 152, 219, 0.3)', display: 'flex', gap: '15px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                                    
                                     <div style={{ flex: 1, minWidth: '200px' }}>
                                         <Input label="اسم الملف" value={p.title} onChange={e => dispatch({ type: 'UPDATE_PDF', payload: { id: p.id, field: 'title' as any, value: e.target.value } })} />
                                     </div>
-                                    
                                     <div style={{ flex: 2, minWidth: '250px' }}>
                                         <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 'bold' }}>رفع الملف (PDF)</label>
                                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -221,8 +223,6 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
                                                     if (file) {
-                                                        // حفظ اسم الملف مؤقتاً عشان يظهر في الشاشة
-                                                        // ⚠️ المفروض هنا يكون فيه دالة لرفع الملف للسيرفر
                                                         dispatch({ type: 'UPDATE_PDF', payload: { id: p.id, field: 'url' as any, value: file.name } });
                                                     }
                                                 }}
@@ -240,7 +240,6 @@ export default function LessonBuilderManager({ params }: { params: Promise<{ id:
                                             </div>
                                         </div>
                                     </div>
-
                                     <div style={{ marginTop: '28px' }}>
                                         <button onClick={() => dispatch({ type: 'DELETE_PDF', payload: p.id })} style={{ background: 'rgba(231,76,60,0.1)', color: 'var(--danger)', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer' }}><FaTrash /></button>
                                     </div>

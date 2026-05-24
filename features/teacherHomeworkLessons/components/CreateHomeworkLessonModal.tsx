@@ -1,28 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaTimes, FaVideo } from 'react-icons/fa';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useToast } from '@/context/ToastContext';
+import { homeworkLessonsService } from '../services/homeworkLessonsService';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
 }
 
+interface Stage {
+    id: string | number;
+    name: string;
+}
+
+const API_BASE_URL = 'http://localhost:5290/api';
+
 export default function CreateHomeworkLessonModal({ isOpen, onClose }: Props) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [title, setTitle] = useState('');
     const [stage, setStage] = useState('');
+    const [stages, setStages] = useState<Stage[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchStages = async () => {
+            if (!isOpen) return;
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch(`${API_BASE_URL}/educational-stages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const stagesArray = result.data || result.items || result; 
+                    setStages(Array.isArray(stagesArray) ? stagesArray : []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch stages", error);
+            }
+        };
+
+        fetchStages();
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title) return;
+        if (!title.trim() || !stage) {
+            showToast('يرجى إدخال اسم الحصة واختيار المرحلة', 'error');
+            return;
+        }
         
-        const newId = Math.random().toString(36).substring(2, 9);
-        router.push(`/teacher/homework-lessons/${newId}`);
-        onClose();
+        setIsSaving(true);
+        try {
+            const result = await homeworkLessonsService.createHomework({ title, stage });
+            showToast('تم الإنشاء بنجاح!', 'success');
+            
+            const newId = result?.id || result?.data?.id;
+            if (newId) {
+                router.push(`/teacher/homework-lessons/${newId}`);
+            }
+            onClose();
+        } catch (error: any) {
+            showToast(error.message || 'فشل في الإنشاء', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -40,18 +89,19 @@ export default function CreateHomeworkLessonModal({ isOpen, onClose }: Props) {
                     </div>
                     <div>
                         <label style={{ display: 'block', color: 'var(--txt-mut)', marginBottom: '8px', fontSize: '0.9rem' }}>الصف الدراسي</label>
-                        {/* 💡 تم حل مشكلة الألوان هنا */}
                         <select value={stage} onChange={e => setStage(e.target.value)} required style={{ width: '100%', padding: '12px 15px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: 'white', borderRadius: '8px', outline: 'none' }}>
                             <option value="" disabled style={{ background: '#1e1e2d', color: 'white' }}>اختر الصف الدراسي...</option>
-                            <option value="1" style={{ background: '#1e1e2d', color: 'white' }}>الصف الأول الثانوي</option>
-                            <option value="2" style={{ background: '#1e1e2d', color: 'white' }}>الصف الثاني الثانوي</option>
-                            <option value="3" style={{ background: '#1e1e2d', color: 'white' }}>الصف الثالث الثانوي</option>
+                            {stages.map(s => (
+                                <option key={s.id} value={s.id} style={{ background: '#1e1e2d', color: 'white' }}>{s.name}</option>
+                            ))}
                         </select>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                         <Button type="button" variant="outline" onClick={onClose} style={{ flex: 1 }}>إلغاء</Button>
-                        <Button type="submit" variant="primary" style={{ flex: 2, background: '#1abc9c', color: '#fff' }}>حفظ ومتابعة تجهيز المحتوى</Button>
+                        <Button type="submit" variant="primary" disabled={isSaving} style={{ flex: 2, background: '#1abc9c', color: '#fff', opacity: isSaving ? 0.7 : 1 }}>
+                            {isSaving ? 'جاري الحفظ...' : 'حفظ ومتابعة تجهيز المحتوى'}
+                        </Button>
                     </div>
                 </form>
             </div>

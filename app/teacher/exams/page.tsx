@@ -1,77 +1,76 @@
-// FILE: app/teacher/exams/page.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useTeacherExams } from '../../../features/teacherExams/hooks/useTeacherExams';
+import { examsService } from '../../../features/teacherExams/services/examsService';
+import { useToast } from '@/context/ToastContext';
+import { useQueryClient } from '@tanstack/react-query';
 
-// Components
 import ExamsHeader from '../../../features/teacherExams/components/ExamsHeader';
 import ExamsFilters from '../../../features/teacherExams/components/ExamsFilters';
 import ExamsTable from '../../../features/teacherExams/components/ExamsTable';
 import ExamsPagination from '../../../features/teacherExams/components/ExamsPagination';
 import CreateExamModal from '../../../features/teacherExams/components/CreateExamModal';
 
+const API_BASE_URL = 'http://localhost:5290/api';
+
 export default function TeacherExamsPage() {
-    // 1. States (UI فقط)
+    const { showToast } = useToast();
+    const queryClient = useQueryClient();
+
     const [search, setSearch] = useState('');
     const [activeStage, setActiveStage] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [stagesList, setStagesList] = useState<any[]>([]);
+    const [stagesMap, setStagesMap] = useState<Record<string, string>>({});
 
-    // 2. Debounce (لتأخير البحث وتقليل الضغط على السيرفر)
     const debouncedSearch = useDebounce(search, 500);
+    const { data, isLoading } = useTeacherExams(currentPage, debouncedSearch, activeStage);
 
-    // 3. Data Fetching (React Query)
-    const { data, isLoading, isError } = useTeacherExams(currentPage, debouncedSearch, activeStage);
+    useEffect(() => {
+        const fetchStages = async () => {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const res = await fetch(`${API_BASE_URL}/educational-stages`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const result = await res.json();
+                    const stagesArray = result.data || result.items || result || [];
+                    const map: Record<string, string> = {};
+                    stagesArray.forEach((s: any) => { map[s.id] = s.name; });
+                    setStagesMap(map);
+                    setStagesList([{ id: 'all', name: 'جميع المراحل' }, ...stagesArray]);
+                }
+            } catch (error) { console.error("Error fetching stages:", error); }
+        };
+        fetchStages();
+    }, []);
 
-    // 4. Handlers
-    const handleFilterChange = (stage: string) => {
-        setActiveStage(stage);
-        setCurrentPage(1); // تصفير الصفحة عند تغيير الفلتر
-    };
-
-    const handleSearchChange = (val: string) => {
-        setSearch(val);
-        setCurrentPage(1); // تصفير الصفحة عند البحث
+    const handleDeleteExam = async (id: string) => {
+        if (!window.confirm('هل أنت متأكد من مسح هذا الامتحان نهائياً؟')) return;
+        try {
+            await examsService.deleteExam(id);
+            showToast('تم مسح الامتحان بنجاح 🗑️', 'success');
+            queryClient.invalidateQueries({ queryKey: ['teacherExams'] });
+        } catch (error: any) { showToast(error.message || 'حدث خطأ أثناء المسح', 'error'); }
     };
 
     return (
-        <div style={{ animation: 'fadeIn 0.5s ease' }}>
-            {/* الهيدر وزرار الإضافة */}
+        /* 🚀 الكود الجذري لمنع خروج التصميم عن الشاشة */
+        <div style={{ display: 'block', width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box', animation: 'fadeIn 0.5s ease' }}>
             <ExamsHeader onCreateClick={() => setIsCreateModalOpen(true)} />
 
-            <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ background: 'var(--card)', padding: 'clamp(10px, 3vw, 20px)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', width: '100%', maxWidth: '100%', minWidth: 0, overflowX: 'hidden', boxSizing: 'border-box' }}>
+                <ExamsFilters stages={stagesList} activeStage={activeStage} onStageChange={(s) => { setActiveStage(s); setCurrentPage(1); }} searchValue={search} onSearchChange={(v) => { setSearch(v); setCurrentPage(1); }} />
                 
-                {/* الفلاتر والبحث */}
-                <ExamsFilters 
-                    activeStage={activeStage} 
-                    onStageChange={handleFilterChange} 
-                    searchValue={search} 
-                    onSearchChange={handleSearchChange} 
-                />
+                <ExamsTable exams={data?.data || []} isLoading={isLoading} stagesMap={stagesMap} onDelete={handleDeleteExam} />
 
-                {/* الجدول */}
-                <ExamsTable 
-                    exams={data?.data || []} 
-                    isLoading={isLoading} 
-                />
-
-                {/* Pagination */}
                 {!isLoading && data?.totalPages && data.totalPages > 1 && (
-                    <ExamsPagination 
-                        currentPage={currentPage} 
-                        totalPages={data.totalPages} 
-                        totalItems={data.total}
-                        onPageChange={setCurrentPage} 
-                    />
+                    <ExamsPagination currentPage={currentPage} totalPages={data.totalPages} totalItems={data.total} onPageChange={setCurrentPage} />
                 )}
             </div>
 
-            {/* مودال الإنشاء */}
-            <CreateExamModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-            />
+            <CreateExamModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} stages={stagesList.filter(s => s.id !== 'all')} />
         </div>
     );
 }
